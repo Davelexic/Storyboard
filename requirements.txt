@@ -44,7 +44,6 @@ protobuf==3.19.6
 pyarrow==10.0.1
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
-pycparser @ file:///tmp/build/80754af9/pycparser_1636541352034/work
 pydeck==0.8.0
 Pygments==2.13.0
 Pympler==1.0.1
@@ -61,7 +60,6 @@ rich==12.6.0
 rsa==4.9
 scipy==1.9.3
 semver==2.13.0
-six @ file:///tmp/build/80754af9/six_1644875935023/work
 smmap==5.0.0
 streamlit==1.15.1
 tensorboard==2.11.0
@@ -76,7 +74,6 @@ tokenizers==0.13.2
 toml==0.10.2
 toolz==0.12.0
 torch==1.13.0
-torchvision @ file:///C:/b/abs_b4hda42z0a/croot/torchvision_1665558898229/work
 tornado==6.2
 tqdm==4.64.1
 transformers==4.24.0
