@@ -1,16 +1,14 @@
-from pydantic import BaseSettings
+from pydantic import BaseModel
+import os
 
 
-class Settings(BaseSettings):
+class Settings(BaseModel):
     """Application configuration loaded from environment variables."""
 
-    database_url: str = "sqlite:///./app.db"
-    jwt_secret: str = "change-me"
-    jwt_algorithm: str = "HS256"
-    app_name: str = "Cinematic Reading Engine"
-
-    class Config:
-        env_file = ".env"
+    database_url: str = os.getenv("DATABASE_URL", "sqlite:///./app.db")
+    jwt_secret: str = os.getenv("JWT_SECRET", "change-me")
+    jwt_algorithm: str = os.getenv("JWT_ALGORITHM", "HS256")
+    app_name: str = os.getenv("APP_NAME", "Cinematic Reading Engine")
 
 
 settings = Settings()

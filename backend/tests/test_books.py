@@ -82,6 +82,31 @@ def test_upload_book_success(client, tmp_path):
     assert books[0]["markup"]["bookTitle"] == "Sample Book"
 
 
+def test_get_book_markup(client, tmp_path):
+    client.post("/users/register", json={"email": "e@example.com", "password": "secret"})
+    login_resp = client.post(
+        "/users/login", json={"email": "e@example.com", "password": "secret"}
+    )
+    token = login_resp.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    epub_path = _create_sample_epub(tmp_path)
+    with open(epub_path, "rb") as f:
+        client.post(
+            "/books/upload",
+            files={"file": ("sample.epub", f, "application/epub+zip")},
+            headers=headers,
+        )
+
+    list_resp = client.get("/books/", headers=headers)
+    book_id = list_resp.json()[0]["id"]
+
+    resp = client.get(f"/books/{book_id}/markup", headers=headers)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["bookTitle"] == "Sample Book"
+
+
 def test_upload_book_invalid_file(client, tmp_path):
     client.post("/users/register", json={"email": "d@example.com", "password": "secret"})
     login_resp = client.post(

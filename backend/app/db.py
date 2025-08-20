@@ -14,4 +14,5 @@ def get_session() -> Generator[Session, None, None]:
         yield session
 
 def init_db() -> None:
+    from . import models  # noqa: F401
     SQLModel.metadata.create_all(engine)
