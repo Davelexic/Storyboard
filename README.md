@@ -5,6 +5,12 @@
 This repository contains the early scaffolding for **Cinei-read**, an MVP
 that enhances traditional ebooks with subtle cinematic effects.
 
+## Project Structure
+- `backend/` – FastAPI service for uploading EPUBs and generating
+  Cinematic Markup.
+- `client/` – React Native application for reading enhanced books.
+- `legacy/` – Historical prototypes not used by the MVP.
+
 
 A revolutionary digital reading platform that enhances traditional ebooks with intelligent cinematic effects—kinetic typography, atmospheric audio, and thematic visuals—while preserving the fundamental joy of reading.
 
