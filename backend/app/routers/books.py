@@ -1,11 +1,49 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlmodel import Session, select
 
 from ..db import get_session
 from ..models import Book, User
 from ..security import get_current_user
+from ..services.parser import parse_epub
+from ..services.converter import generate_cinematic_markup
+import os
+import tempfile
 
 router = APIRouter(prefix="/books", tags=["books"])
+
+
+@router.post("/upload")
+async def upload_book(
+    file: UploadFile = File(...),
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    if file.content_type != "application/epub+zip":
+        raise HTTPException(status_code=400, detail="Invalid file type")
+    try:
+        contents = await file.read()
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".epub") as tmp:
+            tmp.write(contents)
+            tmp_path = tmp.name
+
+        parsed_book = parse_epub(tmp_path)
+        markup = generate_cinematic_markup(parsed_book)
+
+        book = Book(
+            title=parsed_book.get("title", file.filename),
+            owner_id=current_user.id,
+            markup=markup,
+        )
+        session.add(book)
+        session.commit()
+        session.refresh(book)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Failed to process EPUB file") from e
+    finally:
+        if "tmp_path" in locals() and os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
+    return markup
 
 
 @router.post("/", response_model=Book)
