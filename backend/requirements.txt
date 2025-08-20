@@ -5,3 +5,5 @@ ebooklib
 pydantic
 sqlmodel
 alembic
+passlib[bcrypt]
+python-jose
