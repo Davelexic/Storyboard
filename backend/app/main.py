@@ -1,8 +1,16 @@
 from fastapi import FastAPI
 
+from .config import settings
+from .db import init_db
 from .routers import books, users
 
-app = FastAPI(title="Cinematic Reading Engine")
+app = FastAPI(title=settings.app_name)
+
+
+@app.on_event("startup")
+def on_startup() -> None:
+    """Create database tables on startup."""
+    init_db()
 
 # Router includes
 app.include_router(users.router)
