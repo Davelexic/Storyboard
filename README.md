@@ -7,8 +7,7 @@ that enhances traditional ebooks with subtle cinematic effects.
 - `backend/` – FastAPI service for uploading EPUBs and generating
   Cinematic Markup.
 - `client/` – React Native application for reading enhanced books.
-- `model/` – Legacy prototype code (to be refactored).
-- `storyboard.py` – Original experiment script (to be revisited).
+- `legacy/` – Historical prototypes not used by the MVP.
 
 Both backend and client currently contain placeholder implementations that
 will be expanded in future commits.
