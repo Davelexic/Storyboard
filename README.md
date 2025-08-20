@@ -200,6 +200,7 @@ pytest
 python -m py_compile $(git ls-files '*.py')
 ```
 
+
 The CI workflow executes these commands on every push.
 
 ### Development
