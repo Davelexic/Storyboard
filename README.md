@@ -22,3 +22,11 @@ migrations. Typical commands run from the `backend` directory:
 alembic revision --autogenerate -m "description"  # create a new migration
 alembic upgrade head                                # apply migrations
 ```
+
+## Testing
+
+Run the backend test suite with [pytest](https://docs.pytest.org/):
+
+```bash
+pytest
+```
