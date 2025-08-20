@@ -5,3 +5,4 @@ ebooklib
 pydantic
 sqlmodel
 alembic
+httpx

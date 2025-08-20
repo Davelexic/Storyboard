@@ -1,5 +1,7 @@
 # Cinematic Reading Engine
 
+[![CI](https://github.com/OWNER/Storyboard/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/Storyboard/actions/workflows/ci.yml)
+
 This repository contains the early scaffolding for **Cinei-read**, an MVP
 that enhances traditional ebooks with subtle cinematic effects.
 
@@ -22,3 +24,14 @@ migrations. Typical commands run from the `backend` directory:
 alembic revision --autogenerate -m "description"  # create a new migration
 alembic upgrade head                                # apply migrations
 ```
+
+## Testing
+
+Run the test suite and verify Python syntax with:
+
+```bash
+pytest
+python -m py_compile $(git ls-files '*.py')
+```
+
+The CI workflow executes these commands on every push.
