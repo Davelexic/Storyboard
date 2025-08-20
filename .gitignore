@@ -1,5 +1,15 @@
+# Python
 __pycache__/
+*.pyc
 .pytest_cache/
-client/node_modules/
+.venv/
 .env
+dist/
+build/
 
+# React Native
+client/node_modules/
+android/
+ios/
+npm-debug.log
+yarn-error.log
