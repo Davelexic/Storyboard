@@ -1,9 +1,9 @@
 fastapi
 uvicorn
 python-multipart
-ebooklib
 pydantic
 sqlmodel
 alembic
+httpx
 passlib[bcrypt]
 python-jose
