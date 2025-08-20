@@ -3,9 +3,14 @@ from sqlmodel import SQLModel, create_engine, Session
 
 from backend.app.main import app
 from backend.app.db import get_session
+from sqlalchemy.pool import StaticPool
 
 # Setup in-memory test database
-test_engine = create_engine("sqlite://", connect_args={"check_same_thread": False})
+test_engine = create_engine(
+    "sqlite://",
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
 SQLModel.metadata.create_all(test_engine)
 
 

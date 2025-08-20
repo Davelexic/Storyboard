@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Optional
 
 from sqlalchemy import Column, JSON
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, SQLModel
 
 
 class Book(SQLModel, table=True):
@@ -13,5 +13,3 @@ class Book(SQLModel, table=True):
     author: Optional[str] = None
     owner_id: Optional[int] = Field(default=None, foreign_key="user.id")
     markup: Optional[dict] = Field(default=None, sa_column=Column(JSON))
-
-    owner: Optional["User"] = Relationship(back_populates="books")

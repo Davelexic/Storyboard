@@ -77,3 +77,17 @@ def read_book(
     if not book or book.owner_id != current_user.id:
         raise HTTPException(status_code=404, detail="Book not found")
     return book
+
+
+@router.get("/{book_id}/markup")
+def read_book_markup(
+    book_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    book = session.get(Book, book_id)
+    if not book or book.owner_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Book not found")
+    if book.markup is None:
+        raise HTTPException(status_code=404, detail="Markup not found")
+    return book.markup
