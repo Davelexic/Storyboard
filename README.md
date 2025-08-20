@@ -1,6 +1,10 @@
 # Cinematic Reading Engine (Cinei-read)
 
-> **Transform your reading experience with subtle cinematic enhancements**
+[![CI](https://github.com/OWNER/Storyboard/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/Storyboard/actions/workflows/ci.yml)
+
+This repository contains the early scaffolding for **Cinei-read**, an MVP
+that enhances traditional ebooks with subtle cinematic effects.
+
 
 A revolutionary digital reading platform that enhances traditional ebooks with intelligent cinematic effects—kinetic typography, atmospheric audio, and thematic visuals—while preserving the fundamental joy of reading.
 
@@ -181,6 +185,17 @@ cd client
 npm install
 ```
 
+## Testing
+
+Run the test suite and verify Python syntax with:
+
+```bash
+pytest
+python -m py_compile $(git ls-files '*.py')
+```
+
+The CI workflow executes these commands on every push.
+
 ### Development
 ```bash
 # Start backend server
@@ -203,3 +218,4 @@ This project is in early development. Contributions are welcome! Please see our 
 ---
 
 **Cinei-read** - Where literature meets cinematic magic ✨
+
