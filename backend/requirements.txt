@@ -6,3 +6,5 @@ pydantic
 sqlmodel
 alembic
 httpx
+passlib[bcrypt]
+python-jose

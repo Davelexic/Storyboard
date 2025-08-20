@@ -1,18 +1,49 @@
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlmodel import Session, select
 
 from ..db import get_session
 from ..models import User
+from ..security import create_access_token, get_password_hash, verify_password
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.post("/", response_model=User)
-def create_user(user: User, session: Session = Depends(get_session)):
-    session.add(user)
+class UserCreate(BaseModel):
+    email: str
+    password: str
+
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+@router.post("/register", response_model=Token)
+def register(user: UserCreate, session: Session = Depends(get_session)):
+    existing = session.exec(select(User).where(User.email == user.email)).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    db_user = User(email=user.email, password=get_password_hash(user.password))
+    session.add(db_user)
     session.commit()
-    session.refresh(user)
-    return user
+    session.refresh(db_user)
+    token = create_access_token({"sub": str(db_user.id)})
+    return Token(access_token=token)
+
+
+@router.post("/login", response_model=Token)
+def login(user: UserLogin, session: Session = Depends(get_session)):
+    db_user = session.exec(select(User).where(User.email == user.email)).first()
+    if not db_user or not verify_password(user.password, db_user.password):
+        raise HTTPException(status_code=400, detail="Incorrect email or password")
+    token = create_access_token({"sub": str(db_user.id)})
+    return Token(access_token=token)
 
 
 @router.get("/", response_model=list[User])
