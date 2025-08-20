@@ -191,6 +191,17 @@ cd client
 npm install
 ```
 
+### Configuration
+
+Copy `.env.example` to `.env` in the project root and provide values for the required settings:
+
+```
+DATABASE_URL=postgresql://user:password@localhost:5432/dbname
+JWT_SECRET=your-secret-key
+```
+
+The application will read these variables at startup and fail if they are missing.
+
 ## Testing
 
 Run the test suite and verify Python syntax with:
