@@ -12,3 +12,13 @@ that enhances traditional ebooks with subtle cinematic effects.
 
 Both backend and client currently contain placeholder implementations that
 will be expanded in future commits.
+
+## Database Migrations
+
+The backend uses [Alembic](https://alembic.sqlalchemy.org/) for database
+migrations. Typical commands run from the `backend` directory:
+
+```bash
+alembic revision --autogenerate -m "description"  # create a new migration
+alembic upgrade head                                # apply migrations
+```
