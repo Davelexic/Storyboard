@@ -22,7 +22,13 @@ model = AutoModelForCausalLM.from_pretrained("cpierse/gpt2_film_scripts")
 model_id = "CompVis/stable-diffusion-v1-4"
 device = "cuda" if torch.cuda.is_available() else "cpu"
 app_mode = st.sidebar.selectbox('Select Page',['Home','Generate'])
-pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16, revision="fp16")
+# Use float16 only on CUDA-enabled GPUs; default to float32 on CPU for compatibility
+if device == "cuda":
+    pipe = StableDiffusionPipeline.from_pretrained(
+        model_id, torch_dtype=torch.float16, revision="fp16")
+else:
+    pipe = StableDiffusionPipeline.from_pretrained(
+        model_id, torch_dtype=torch.float32)
 pipe = pipe.to(device)
 
 
