@@ -29,7 +29,7 @@ def register(user: UserCreate, session: Session = Depends(get_session)):
     existing = session.exec(select(User).where(User.email == user.email)).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
-    db_user = User(email=user.email, password=get_password_hash(user.password))
+    db_user = User(email=user.email, hashed_password=get_password_hash(user.password))
     session.add(db_user)
     session.commit()
     session.refresh(db_user)
@@ -40,7 +40,7 @@ def register(user: UserCreate, session: Session = Depends(get_session)):
 @router.post("/login", response_model=Token)
 def login(user: UserLogin, session: Session = Depends(get_session)):
     db_user = session.exec(select(User).where(User.email == user.email)).first()
-    if not db_user or not verify_password(user.password, db_user.password):
+    if not db_user or not verify_password(user.password, db_user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     token = create_access_token({"sub": str(db_user.id)})
     return Token(access_token=token)
