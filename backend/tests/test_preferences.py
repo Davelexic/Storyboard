@@ -18,14 +18,22 @@ def test_user_preferences_roundtrip(client):
         "effectsEnabled": True,
         "fontSize": 16,
         "brightness": 1.0,
-        "effectIntensity": 1.0,
+        "adaptiveBrightness": False,
+        "effects": {
+            "motion": {"enabled": True, "intensity": 1.0},
+            "color": {"enabled": True, "intensity": 1.0},
+        },
     }
 
     prefs = {
         "effectsEnabled": False,
         "fontSize": 20,
         "brightness": 0.8,
-        "effectIntensity": 0.7,
+        "adaptiveBrightness": True,
+        "effects": {
+            "motion": {"enabled": False, "intensity": 0.4},
+            "color": {"enabled": True, "intensity": 0.9},
+        },
     }
     put_resp = client.put("/users/me/preferences", headers=headers, json=prefs)
     assert put_resp.status_code == 200

@@ -15,12 +15,14 @@ export default function SettingsScreen({
   onSave,
   effectsEnabled,
   setEffectsEnabled,
+  effectsConfig,
+  setEffectsConfig,
   fontSize,
   setFontSize,
   brightness,
   setBrightness,
-  effectIntensity,
-  setEffectIntensity
+  adaptiveBrightness,
+  setAdaptiveBrightness,
 }) {
   const handleBack = () => {
     if (onSave) {
@@ -74,6 +76,18 @@ export default function SettingsScreen({
               minimumTrackTintColor="#3498db"
               maximumTrackTintColor="#bdc3c7"
               thumbStyle={styles.sliderThumb}
+              disabled={adaptiveBrightness}
+            />
+          </View>
+
+          {/* Adaptive Brightness */}
+          <View style={styles.settingItem}>
+            <Text style={styles.settingLabel}>Adaptive Brightness</Text>
+            <Switch
+              value={adaptiveBrightness}
+              onValueChange={setAdaptiveBrightness}
+              trackColor={{ false: '#bdc3c7', true: '#3498db' }}
+              thumbColor={adaptiveBrightness ? '#ffffff' : '#f4f3f4'}
             />
           </View>
         </View>
@@ -93,22 +107,48 @@ export default function SettingsScreen({
             />
           </View>
 
-          {/* Effect Intensity */}
-          {effectsEnabled && (
-            <View style={styles.settingItem}>
-              <Text style={styles.settingLabel}>Effect Intensity: {Math.round(effectIntensity * 100)}%</Text>
-              <Slider
-                style={styles.slider}
-                minimumValue={0.1}
-                maximumValue={1.0}
-                value={effectIntensity}
-                onValueChange={setEffectIntensity}
-                minimumTrackTintColor="#3498db"
-                maximumTrackTintColor="#bdc3c7"
-                thumbStyle={styles.sliderThumb}
-              />
-            </View>
-          )}
+          {/* Per-effect Configuration */}
+          {effectsEnabled &&
+            Object.entries(effectsConfig).map(([name, config]) => (
+              <View key={name}>
+                <View style={styles.settingItem}>
+                  <Text style={styles.settingLabel}>{name} Enabled</Text>
+                  <Switch
+                    value={config.enabled}
+                    onValueChange={(value) =>
+                      setEffectsConfig({
+                        ...effectsConfig,
+                        [name]: { ...config, enabled: value },
+                      })
+                    }
+                    trackColor={{ false: '#bdc3c7', true: '#3498db' }}
+                    thumbColor={config.enabled ? '#ffffff' : '#f4f3f4'}
+                  />
+                </View>
+                {config.enabled && (
+                  <View style={styles.settingItem}>
+                    <Text style={styles.settingLabel}>
+                      {name} Intensity: {Math.round(config.intensity * 100)}%
+                    </Text>
+                    <Slider
+                      style={styles.slider}
+                      minimumValue={0.1}
+                      maximumValue={1.0}
+                      value={config.intensity}
+                      onValueChange={(value) =>
+                        setEffectsConfig({
+                          ...effectsConfig,
+                          [name]: { ...config, intensity: value },
+                        })
+                      }
+                      minimumTrackTintColor="#3498db"
+                      maximumTrackTintColor="#bdc3c7"
+                      thumbStyle={styles.sliderThumb}
+                    />
+                  </View>
+                )}
+              </View>
+            ))}
         </View>
 
         {/* About */}

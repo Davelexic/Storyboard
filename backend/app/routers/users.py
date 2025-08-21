@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlmodel import Session, select
+from typing import Dict
 
 from ..db import get_session
 from ..models import User
@@ -29,11 +30,22 @@ class Token(BaseModel):
     token_type: str = "bearer"
 
 
+class EffectConfig(BaseModel):
+    enabled: bool = True
+    intensity: float = 1.0
+
+
 class Preferences(BaseModel):
     effectsEnabled: bool = True
     fontSize: int = 16
     brightness: float = 1.0
-    effectIntensity: float = 1.0
+    adaptiveBrightness: bool = False
+    effects: Dict[str, EffectConfig] = Field(
+        default_factory=lambda: {
+            "motion": EffectConfig(),
+            "color": EffectConfig(),
+        }
+    )
 
 
 @router.post("/register", response_model=Token)
@@ -82,7 +94,7 @@ def update_preferences(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    current_user.preferences = prefs.dict()
+    current_user.preferences = prefs.model_dump()
     session.add(current_user)
     session.commit()
     session.refresh(current_user)
