@@ -1,4 +1,17 @@
 const assert = require('assert');
+// Provide a minimal window.localStorage for AsyncStorage in Node
+const store = {};
+global.window = {
+  localStorage: {
+    getItem: (k) => (k in store ? store[k] : null),
+    setItem: (k, v) => {
+      store[k] = v;
+    },
+    removeItem: (k) => {
+      delete store[k];
+    },
+  },
+};
 const {
   saveBookMarkup,
   fetchBookMarkup,
@@ -24,8 +37,15 @@ const { enqueue, flushQueue, _getQueue } = require('../utils/syncQueue');
     }
     return Promise.reject(new Error('unknown url'));
   };
-  await savePreferencesLocal({ effectsEnabled: true });
-  await enqueue({ type: 'savePreferences', payload: { effectsEnabled: true } });
+  const prefs = {
+    effectsEnabled: true,
+    adaptiveBrightness: false,
+    effects: { motion: { enabled: true, intensity: 0.5 } },
+  };
+  await savePreferencesLocal(prefs);
+  const loaded = await loadPreferencesLocal();
+  assert.deepStrictEqual(loaded, prefs);
+  await enqueue({ type: 'savePreferences', payload: prefs });
   const flushed = await flushQueue('token');
   const queue = await _getQueue();
   assert.strictEqual(flushed, 1);
