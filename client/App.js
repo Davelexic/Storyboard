@@ -24,8 +24,8 @@ import {
 } from './utils/storage';
 import { enqueue, flushQueue } from './utils/syncQueue';
 import { logEvent } from './services/analytics';
-
-const API_URL = 'http://localhost:8000';
+import apiClient from './services/api';
+import authService from './services/auth';
 const { width, height } = Dimensions.get('window');
 
 export default function App() {
@@ -53,17 +53,12 @@ export default function App() {
       setEffectIntensity(local.effectIntensity);
     }
     try {
-      const res = await fetch(`${API_URL}/users/me/preferences`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const prefs = await res.json();
-        setEffectsEnabled(prefs.effectsEnabled);
-        setFontSize(prefs.fontSize);
-        setBrightness(prefs.brightness);
-        setEffectIntensity(prefs.effectIntensity);
-        await savePreferencesLocal(prefs);
-      }
+      const prefs = await apiClient.getUserPreferences();
+      setEffectsEnabled(prefs.effectsEnabled);
+      setFontSize(prefs.fontSize);
+      setBrightness(prefs.brightness);
+      setEffectIntensity(prefs.effectIntensity);
+      await savePreferencesLocal(prefs);
     } catch (err) {
       console.error('Failed to load preferences', err);
     }
@@ -74,18 +69,28 @@ export default function App() {
     await savePreferencesLocal(prefs);
     if (!token) return;
     try {
-      await fetch(`${API_URL}/users/me/preferences`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(prefs),
-      });
+      await apiClient.updateUserPreferences(prefs);
     } catch (err) {
       await enqueue({ type: 'savePreferences', payload: prefs });
     }
   };
+
+  // Initialize authentication on app start
+  useEffect(() => {
+    const initializeApp = async () => {
+      try {
+        const isAuthenticated = await authService.initialize();
+        if (isAuthenticated) {
+          setToken(authService.getToken());
+          setScreen('library');
+        }
+      } catch (error) {
+        console.error('Failed to initialize app:', error);
+      }
+    };
+    
+    initializeApp();
+  }, []);
 
   useEffect(() => {
     if (token) {
@@ -108,17 +113,12 @@ export default function App() {
     
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/users/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      if (!res.ok) throw new Error('Login failed');
-      const data = await res.json();
-      setToken(data.access_token);
+      const result = await authService.login(email, password);
+      setToken(result.token);
       setScreen('library');
+      Alert.alert('Success', 'Login successful!');
     } catch (err) {
-      Alert.alert('Login Error', 'Invalid credentials. Please try again.');
+      Alert.alert('Login Error', err.message || 'Invalid credentials. Please try again.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -133,15 +133,12 @@ export default function App() {
     
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/users/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      if (!res.ok) throw new Error('Registration failed');
+      await authService.register(email, password);
       Alert.alert('Success', 'Account created! Please login.');
+      setEmail('');
+      setPassword('');
     } catch (err) {
-      Alert.alert('Registration Error', 'Failed to create account. Please try again.');
+      Alert.alert('Registration Error', err.message || 'Failed to create account. Please try again.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -156,15 +153,28 @@ export default function App() {
 
   const fetchBooks = async () => {
     try {
-      const res = await fetch(`${API_URL}/books`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error('Failed to fetch books');
-      const data = await res.json();
+      const data = await apiClient.getBooks();
       setBooks(data);
     } catch (err) {
       Alert.alert('Error', 'Failed to load books');
       console.error(err);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      setToken(null);
+      setScreen('login');
+      setEmail('');
+      setPassword('');
+      setBooks([]);
+      setMarkup(null);
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Force logout even if there's an error
+      setToken(null);
+      setScreen('login');
     }
   };
 
@@ -375,10 +385,7 @@ export default function App() {
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.logoutButton}
-              onPress={() => {
-                setToken(null);
-                setScreen('login');
-              }}
+              onPress={handleLogout}
             >
               <Text style={styles.logoutText}>Logout</Text>
             </TouchableOpacity>
