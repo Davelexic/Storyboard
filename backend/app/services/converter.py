@@ -8,8 +8,8 @@ from typing import Dict, List
 def generate_cinematic_markup(parsed_book: Dict[str, object]) -> Dict[str, object]:
     """Convert parsed book data into Cinematic Markup JSON structure.
 
-    The transformation implemented here is intentionally simple: each paragraph
-    from the parsed book becomes an entry in the ``content`` list with the
+    The transformation implemented here is intentionally simple: each content
+    item from the parsed book becomes an entry in the ``content`` list with the
     ``paragraph`` type and an empty ``effects`` list. This provides a predictable
     structure for clients while leaving room for future enhancement logic.
 
@@ -25,8 +25,9 @@ def generate_cinematic_markup(parsed_book: Dict[str, object]) -> Dict[str, objec
 
     for chapter in parsed_book.get("chapters", []):
         content: List[Dict[str, object]] = []
-        for paragraph in chapter.get("paragraphs", []):
-            content.append({"type": "paragraph", "text": paragraph, "effects": []})
+        for item in chapter.get("content", []):
+            text = item.get("text", "")
+            content.append({"type": "paragraph", "text": text, "effects": []})
 
         chapters_markup.append(
             {
