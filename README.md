@@ -61,6 +61,14 @@ Raw Book Content → Structural Analysis → Character Analysis → Emotional Sc
 - **Quality Control**: Multi-layer validation ensuring appropriate effect usage
 - **Sparsity Enforcement**: Prevents effect overuse through intelligent density control
 
+## 📚 Book Processing Flow
+
+1. **Upload**: `POST /books/upload` with an EPUB file. The server parses the book and runs `StoryAnalyzer.analyze_and_enhance` to generate cinematic markup.
+2. **Check Status**: `GET /books/jobs/{job_id}/status` returns `processing` or `completed` for the upload job.
+3. **Retrieve Markup**: `GET /books/jobs/{job_id}/result` returns the enhanced cinematic markup once processing is complete.
+
+The processed markup is persisted for later access and library management.
+
 ## 📋 Requirements
 
 ### Functional Requirements
