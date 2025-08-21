@@ -8,6 +8,7 @@ when and how effects should be applied while maintaining the "book is the star" 
 from __future__ import annotations
 from typing import Dict, List, Any, Optional
 import logging
+from .utils import contains_dialogue
 
 try:  # Optional dependency for model-based sentiment analysis
     from transformers import pipeline  # type: ignore
@@ -168,9 +169,7 @@ class EmotionalIntensityScorer:
         text_lower = text.lower()
         
         # Check for dialogue markers
-        has_dialogue = '"' in text or '"' in text or '"' in text
-        
-        if not has_dialogue:
+        if not contains_dialogue(text):
             return 0.1  # Low emotion for non-dialogue
         
         # Analyze dialogue emotion
