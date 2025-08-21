@@ -195,6 +195,37 @@ def create_sample_books():
     return sample_books
 
 
+def test_theme_specific_effect_application():
+    """Verify that effects are filtered by theme before evaluation."""
+    selector = IntelligentEffectSelector()
+    selector._should_apply_effects = lambda score, history: True
+
+    fantasy_item = {
+        'text': 'The wizard used magic to make the cave glow with mystic light.',
+        'emotional_score': 0.7,
+        'emotional_context': {'primary_emotion': 'wonder'}
+    }
+    fantasy_effects = selector.select_appropriate_effects(
+        fantasy_item, {}, [], book_theme='fantasy'
+    )
+    assert any(e.get('style') == 'fantasy_glow' for e in fantasy_effects)
+
+    noir_filtered = selector.select_appropriate_effects(
+        fantasy_item, {}, [], book_theme='noir'
+    )
+    assert all(e.get('style') != 'fantasy_glow' for e in noir_filtered)
+
+    noir_item = {
+        'text': 'The detective slipped into the dark alley, cloaked in shadow and smoke.',
+        'emotional_score': 0.65,
+        'emotional_context': {'primary_emotion': 'mystery'}
+    }
+    noir_effects = selector.select_appropriate_effects(
+        noir_item, {}, [], book_theme='noir'
+    )
+    assert any(e.get('style') == 'noir_shadow' for e in noir_effects)
+
+
 def test_individual_components():
     """Test individual analysis components."""
     logger.info("Testing individual analysis components...")
