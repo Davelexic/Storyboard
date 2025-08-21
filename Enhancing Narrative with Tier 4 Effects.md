@@ -245,3 +245,283 @@ The ultimate goal of these techniques is not to be clever, but to forge a deeper
 73. Ranked characters based on their awareness/4th wall break : r/Undertale \- Reddit, accessed August 20, 2025, [https://www.reddit.com/r/Undertale/comments/1i7gfwr/ranked\_characters\_based\_on\_their\_awareness4th/](https://www.reddit.com/r/Undertale/comments/1i7gfwr/ranked_characters_based_on_their_awareness4th/)  
 74. How Undertale PERFECTED Meta Storytelling \- YouTube, accessed August 20, 2025, [https://www.youtube.com/watch?v=d\_eNTL2uRw0](https://www.youtube.com/watch?v=d_eNTL2uRw0)  
 75. METAFICTION & FOURTH WALL BREAKS | How Gaming Perfected The Concept \- YouTube, accessed August 20, 2025, [https://www.youtube.com/watch?v=An2oxYq1bDg](https://www.youtube.com/watch?v=An2oxYq1bDg)
+
+---
+
+## **Appendix A: Operationalizing Tier 4 — Budget, Gating, and Expanded Event Catalog**
+
+This appendix translates the theory into a production rulebook and expands the event vocabulary. Tier 4 must be treated as a scarce, near-sacred resource: 1–2 uses per book, or 3 at most for long epics (>200k words), and only when the Climax Engine and narrative alignment converge.
+
+### A.1 Tier 4 Budget and Gating
+
+- Tier4Budget: default 2 tokens per book; 3 for length >200k words, 1 for novellas <40k.
+- Required preconditions (all true):
+  - Climax_Score ≥ 99th percentile for the book OR Narrative Pivot (irreversible change-of-state with high character convergence).
+  - Passage_Complexity ≤ 70th percentile unless the effect itself clarifies comprehension.
+  - Thematic Diegesis: effect is stylistically coherent with Base Theme and sub-palette.
+  - Safety/Accessibility: photosensitivity checks passed; accessible alternative defined.
+  - Preflight Device Capability: effect can execute gracefully on current device.
+- Hard rules:
+  - Never deploy Tier 4 within 1500 words of another Tier 4.
+  - Never co-occur with Tier 3 haptic+audio in the same 2-second window.
+  - Provide an “Accessibility Mode” downgrade for every Tier 4.
+
+Pseudo-logic:
+
+```yaml
+if Tier4Budget > 0
+  and (ClimaxScore >= p99 or NarrativePivot == true)
+  and ThematicDiegesis == true
+  and SafetyChecks.pass == true
+  and DevicePreflight.pass == true
+  and distanceFromLastTier4 >= 1500_words:
+    allow Tier4Candidate
+else:
+    suppress
+```
+
+### A.2 Device Capability + Environment Preflight
+
+- Display: supports required shaders/animations; fallback to static variants.
+- Audio: can render wide dynamic range; fallback to mono/soft.
+- Haptics: check availability; otherwise omit.
+- Sensors (optional): tilt/accelerometer for ergodic interactions; never require camera/mic.
+- Ambient: if device reports “Do Not Disturb” or low battery, prefer non-intrusive variants.
+
+### A.3 Accessibility and Safety Profiles
+
+- Photosensitivity: avoid high-contrast flashes; cap to ≤ 100 ms, ≤ 1 occurrence per Tier 4, brightness ≤ +20%.
+- Motion sensitivity: provide non-motion alternative (e.g., fade instead of sway/rotate).
+- Audio: LUFS target −28 to −24; no sudden >10 dB jumps; offer captions.
+- Haptics: opt-in; strength capped; respect system accessibility settings.
+- Disclosure: a global setting describes the possibility of rare metanarrative events; never impersonate OS-level warnings in accessibility mode.
+
+### A.4 Expanded Tier 4 Event Taxonomy (with Diegetic Rationale)
+
+Each entry includes: ID, narrative purpose, preconditions, execution (visual/audio/haptic/interaction), cooldown, accessibility alternative.
+
+#### A.4.1 Medium/Interface Illusions (Metanarrative)
+
+1) t4.meta.low_battery_fake
+- Purpose: induce dread/loss of control in techno-horror/spy contexts.
+- Preconditions: theme_tech/horror; Climax ≥ p99; user consent for meta illusions enabled.
+- Execution: brief overlay resembling in-world device alert (not OS-accurate), then resolves with diegetic message from antagonist/AI.
+- Cooldown: Tier 4 budget spent; do not reuse.
+- Accessibility: replace with “signal lost” text banner and soft audio dip.
+
+2) t4.meta.text_corruption_bloom
+- Purpose: simulate reality breakdown or data breach.
+- Execution: lines momentarily render as corrupted glyphs, then cohere into a hidden message.
+- Notes: never degrade legibility for more than 1–2 seconds; provide “reveal” control.
+
+3) t4.meta.bookmark_erasure_apparition
+- Purpose: manifest an antagonist/censor erasing reader’s mark.
+- Execution: a fake “Bookmark removed by: [entity]” appears, followed by in-world justification.
+- Alt: Inline line appears: “You won’t need the bookmark where this goes.”
+
+#### A.4.2 Artifact Transformations (Book as Object)
+
+4) t4.artifact.blood_spatter_one_shot
+- Purpose: catastrophic shock (singular death/violence).
+- Execution: sudden spatter over margins; lingers as faint stain thereafter.
+- Alt: desaturated vignette + single red word-pulse on victim’s name.
+
+5) t4.artifact.tear_drop_blur
+- Purpose: quiet grief culmination.
+- Execution: a single tear ripple distorts one keyword, then dries to watermark.
+- Alt: gentle blur and italic emphasis on the word; no animation.
+
+6) t4.artifact.frost_creep_tactile
+- Purpose: convey oppressive cold; mirror Part III.1.
+- Execution: frost grows from corners; on touch, micro-crack SFX.
+- Alt: static frost frame; mute audio; no interaction needed.
+
+#### A.4.3 Ergogic Interactions (Physical Effort)
+
+7) t4.ergodic.swipe_to_clear_vision
+- Purpose: simulate panic/claustrophobia (buried alive; fogged visor).
+- Execution: transient blur; reader performs rapid swipe to refocus; limited to 1–3 cycles.
+- Alt: auto-resolve after 1s with text banner acknowledging struggle.
+
+8) t4.ergodic.tilt_to_reveal
+- Purpose: hidden ink, secret message, labyrinth navigation.
+- Execution: tilting the device reveals angle-dependent text or map path.
+- Alt: tap-to-reveal with subtle shimmer.
+
+9) t4.ergodic.press_and_hold_fate_seal
+- Purpose: binding oath/contract.
+- Execution: reader must press-and-hold “seal” to bind prophecy; ensuing watermark persists.
+- Alt: timed progress auto-completes with narration acknowledging reluctance.
+
+#### A.4.4 Temporal/Spacetime Manipulations
+
+10) t4.time.map_montage_route
+- Purpose: compress journey; externalize map (cf. Part II.1).
+- Execution: fade to map with animated route; then return to text.
+- Alt: static map with route traced on tap.
+
+11) t4.time.page_out_of_order
+- Purpose: simulate timeline fractures; used once.
+- Execution: next tap shows “wrong” page for 2–3 seconds, then snaps back with diegetic line.
+- Alt: inline banner: “Time slips. Begin again.” No page swap.
+
+12) t4.time.clock_desync_overlay
+- Purpose: destiny/loop awareness.
+- Execution: page header clock runs backwards slowly during scene.
+- Alt: static reversed clock icon next to section title.
+
+#### A.4.5 Consciousness Externalizations
+
+13) t4.psyche.text_fade_memory_erosion
+- Purpose: simulate memory loss (cf. Part I.1) with “tattoo-fact” anchors.
+- Execution: adjectives/adverbs fade; key “facts” remain bolded.
+- Alt: grayscale filter on non-critical words, no fade animation.
+
+14) t4.psyche.double_image_mask
+- Purpose: dissociation; “her face” ↔ “the mask”.
+- Execution: token alternates 1–2 times within 1 second; resolves.
+- Alt: render both with slash and italics.
+
+15) t4.psyche.stream_overflow
+- Purpose: intrusive thoughts flood margins.
+- Execution: margin notes cascade in then purge; legibility maintained.
+- Alt: single inset box with 1–2 intrusive lines.
+
+#### A.4.6 Surveillance/Agency Illusions
+
+16) t4.surveillance.censor_live_redact
+- Purpose: living antagonist presence.
+- Execution: live strike-through as gaze nears sentence.
+- Alt: pre-redacted bar appears without animation.
+
+17) t4.surveillance.reader_address
+- Purpose: diegetic acknowledgment of reader action.
+- Execution: new line fades in referencing re-reads/lingers.
+- Alt: footnote style aside.
+
+#### A.4.7 Environmental Hazards (Advanced)
+
+18) t4.env.fire_char_edge_grow
+- Purpose: escalating peril via page-edge char.
+- Execution: char creeps during scene; clamps at 8% margin.
+- Alt: static charred border treatment.
+
+19) t4.env.waterline_rise
+- Purpose: drowning; claustrophobia.
+- Execution: watery refraction rises subtly; textual bleed at base.
+- Alt: color shift + muffled audio; no motion.
+
+#### A.4.8 Found-Footage/Epistolary Anomalies
+
+20) t4.found.document_camera_parallax
+- Purpose: simulate scanned/photographed page.
+- Execution: slight parallax shift on tilt reveals fingerprints/stains.
+- Alt: static “scanned” frame.
+
+21) t4.found.typewriter_overstrike
+- Purpose: retro dossier authenticity.
+- Execution: letters overstruck in-line; clack SFX once.
+- Alt: visually overstruck font only.
+
+#### A.4.9 Theme-Specific Exemplars
+
+- Sci‑Fi: t4.meta.low_battery_fake; t4.time.clock_desync_overlay; t4.ergodic.tilt_to_reveal (star map).
+- Romantasy: t4.ergodic.press_and_hold_fate_seal; t4.psyche.text_fade_memory_erosion (love spell cost); t4.artifact.tear_drop_blur.
+- Medieval Fantasy: t4.time.map_montage_route; t4.env.fire_char_edge_grow (siege); t4.found.typewriter_overstrike replaced by “scribal overstrike” effect.
+- Comedy: t4.time.page_out_of_order for a single gag with immediate self-correction; use sparingly.
+- Horror: t4.meta.text_corruption_bloom; t4.surveillance.censor_live_redact; t4.env.waterline_rise.
+- Mystery: t4.found.document_camera_parallax; t4.ergodic.tilt_to_reveal hidden watermark.
+- Suspense: t4.surveillance.reader_address; t4.meta.bookmark_erasure_apparition.
+
+### A.5 Orchestration with Lower Tiers
+
+- Pre-roll: Use Tier 1/2 to prepare affect; Tier 4 delivers the singular punctuation.
+- Post-roll: Immediately downshift to calm Tier 1; suppress Tier 2/3 for ≥300 words to restore flow.
+- Redundancy guard: If Tier 4 is visual-heavy, avoid concurrent audio/haptic spikes.
+
+### A.6 API Contract (Implementation Schema)
+
+```json
+{
+  "event_id": "t4.meta.text_corruption_bloom",
+  "book_id": "uuid",
+  "chunk_id": "uuid",
+  "preconditions": {
+    "climax_percentile": 0.991,
+    "narrative_pivot": true,
+    "diegesis_ok": true,
+    "complexity_pctl": 0.52,
+    "distance_from_last_t4_words": 4200
+  },
+  "device_preflight": {"display": true, "audio": true, "haptics": false, "sensor_tilt": true},
+  "accessibility": {"photosensitive": false, "motion_sensitive": true},
+  "execution_plan": {
+    "visual": {"mode": "glyph_bloom", "duration_ms": 1200},
+    "audio": {"id": "tone_data_desync", "lufs": -26},
+    "interaction": {"type": "tap_to_resolve", "timeout_ms": 800}
+  },
+  "fallback_plan": {
+    "visual": {"mode": "static_corruption_frame"},
+    "audio": {"id": "none"}
+  },
+  "cooldowns": {"tier4": 2000, "tier3": 500},
+  "rationale": "Data breach revelation synchronized with protagonist’s realization."
+}
+```
+
+### A.7 Worked Examples (Per Requested Genres)
+
+1) Sci‑Fi (Space Horror) — Air Runs Thin
+- Trigger: Climax p99.4; protagonist trapped in derelict duct.
+- Event: t4.env.waterline_rise variant “airline_fall” (pressure drop); faint condensation on margins.
+- Execution: engine dims ambient; text slightly desaturates; 4-second muffled audio swell; no haptic.
+- Alt: static desaturation + caption “The air thins.”
+
+2) Romantasy — Oath Bound
+- Trigger: Destiny sealed between leads.
+- Event: t4.ergodic.press_and_hold_fate_seal.
+- Execution: press-and-hold sigil; subtle glow persists as watermark in subsequent chapters.
+- Alt: auto-seal with narrated acknowledgment.
+
+3) Medieval Fantasy — Siege Fire
+- Trigger: Keep ignites at narrative midpoint reversal.
+- Event: t4.env.fire_char_edge_grow.
+- Execution: char creeps inward to 8%; single ember SFX; then stabilizes; Tier 1 warmth shifts to ashen cool.
+- Alt: static charred border.
+
+4) Comedy — Timeline Prank
+- Trigger: Comic beat; not a climax.
+- Event: t4.time.page_out_of_order (1.5s gag).
+- Execution: quick mis-page, immediate self-owning line; no audio/haptic.
+- Alt: inline aside only.
+
+5) Horror — The Device Lies
+- Trigger: Antagonist reaches across medium.
+- Event: t4.meta.low_battery_fake.
+- Execution: faux alert morphs into in-world taunt; then normalizes. Cooldown consumes Tier4Budget.
+- Alt: “signal lost” banner.
+
+6) Mystery/Suspense — The Evidence Was Touched
+- Trigger: Hero scrutinizes a “scanned” page pivotal to case.
+- Event: t4.found.document_camera_parallax.
+- Execution: slight tilt reveals fingerprint grease; camera_shutter_soft once.
+- Alt: static “scanned” frame.
+
+### A.8 Ethics, Privacy, and Consent
+
+- Never impersonate real OS dialogs, security warnings, or delete/modify actual reader data.
+- Provide global opt-out for metanarrative illusions; default to cautious mode.
+- Do not access camera/microphone; no network calls tied to Tier 4 without explicit user consent.
+- Always provide an accessible, non-startling alternative.
+
+### A.9 QA and Playtesting Checklist
+
+- Legibility: text remains readable or resolves within ≤ 2 seconds; WCAG AA maintained.
+- Photosensitivity: tested with high-risk profiles; no rapid flashing sequences.
+- Audio levels: no unexpected spikes; captions provided.
+- Cooldowns: instrumentation verifies distances between Tier 4/Tier 3.
+- Telemetry (opt-in): log effect impressions and abandonment to tune thresholds.
+
+---
+
+This operational appendix can evolve into the authoritative Tier 4 registry. Each event should be versioned, unit-tested in a sandbox reader, and validated by human raters for diegesis, impact, and safety before inclusion in production catalogs.

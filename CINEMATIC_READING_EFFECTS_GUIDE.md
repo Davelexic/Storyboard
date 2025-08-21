@@ -559,4 +559,119 @@ Worked examples:
 - Space horror silence cue: ambient RMS falls below −40 dBFS for ≥2s; consider single soft sting within cooldown.
 - Mystery focus: named entity (object) mentioned ≥3 times in page; allow focus_vignette_micro on mention 3.
 
+---
+
+### 14) Tier 4 Registry and Validation Rules (Promotion from Tier 4 Paper)
+
+Tier 4 effects are singular, high-impact narrative events. They must be part of this master registry with strict gating and safety. Use at most 1–2 per book (3 for >200k words).
+
+#### 14.1 Tier 4 Effect Registry
+
+| id | category | modality | purpose | allowed_themes (examples) | budget_cost | cooldown_words | accessibility_alt |
+| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
+| t4.meta.low_battery_fake | metanarrative | visual+audio | dread, loss of control | techno-horror, cyberpunk, space_horror, political_thriller | 1 | 1500+ | signal_lost_banner |
+| t4.meta.text_corruption_bloom | metanarrative | visual(+audio) | data breach, reality breakdown | sci_fi, horror, mystery_techno | 1 | 1500+ | static_corruption_frame |
+| t4.meta.bookmark_erasure_apparition | metanarrative | visual | antagonist awareness | thriller, horror, mystery | 1 | 1500+ | inline_message |
+| t4.artifact.blood_spatter_one_shot | artifact | visual(+audio) | singular violent shock | crime, war, horror | 1 | 2000+ | red_word_pulse_only |
+| t4.artifact.tear_drop_blur | artifact | visual(+audio) | quiet grief culmination | romance, romantasy, lit_fiction | 1 | 1500+ | gentle_blur_static |
+| t4.artifact.frost_creep_tactile | artifact | visual(+audio+haptic) | oppressive cold | survival_arctic, space_horror | 1 | 1500+ | static_frost_frame |
+| t4.ergodic.swipe_to_clear_vision | ergodic | interaction+visual | panic, claustrophobia | horror, suspense | 1 | 1500+ | auto_resolve_blur |
+| t4.ergodic.tilt_to_reveal | ergodic | interaction+visual | hidden text/map | mystery, time_travel, sci_fi | 1 | 1500+ | tap_to_reveal |
+| t4.ergodic.press_and_hold_fate_seal | ergodic | interaction+visual | binding oath/prophecy | romantasy, mythic_epic | 1 | 1500+ | timed_auto_seal |
+| t4.time.map_montage_route | time/space | visual(+audio) | compress journey | epic_fantasy, historical_naval, sci_fi_space_opera | 1 | 1500+ | static_map_route |
+| t4.time.page_out_of_order | time/space | visual | timeline fracture gag/unease | comedy (rare), psych_thriller | 1 | 2000+ | inline_banner_only |
+| t4.time.clock_desync_overlay | time/space | visual(+audio) | fate/loop awareness | sci_fi, time_travel, mystery | 1 | 1500+ | static_reversed_clock_icon |
+| t4.psyche.text_fade_memory_erosion | psyche | visual | memory loss simulation | psych_thriller, romantasy (magic cost) | 1 | 1500+ | grayscale_noncritical_words |
+| t4.psyche.double_image_mask | psyche | visual | dissociation | psych_thriller, horror | 1 | 1500+ | slash_dual_render |
+| t4.psyche.stream_overflow | psyche | visual | intrusive thoughts flood | psych_thriller, literary | 1 | 1500+ | inset_box_comments |
+| t4.surveillance.censor_live_redact | surveillance | visual(+audio) | living censor antagonist | political_thriller, techno, horror | 1 | 1500+ | pre_redacted_bar |
+| t4.surveillance.reader_address | surveillance | visual | diegetic acknowledgment of reader | mystery, suspense, meta | 1 | 1500+ | footnote_aside |
+| t4.env.fire_char_edge_grow | environment | visual(+audio) | escalating peril (fire) | medieval_fantasy, war, noir | 1 | 1500+ | static_charred_border |
+| t4.env.waterline_rise | environment | visual(+audio) | drowning/pressure | horror, survival, naval | 1 | 1500+ | color_shift_muffle |
+| t4.found.document_camera_parallax | found-footage | visual(+audio) | scanned artifact authenticity | mystery, crime_procedural | 1 | 1500+ | static_scanned_frame |
+| t4.found.typewriter_overstrike | found-footage | visual(+audio) | retro dossier authenticity | noir, historical | 1 | 1500+ | visual_overstrike_only |
+
+Notes:
+- “allowed_themes” is illustrative; final enforcement uses Base Theme → allowed/forbidden.
+- All Tier 4 entries must define an accessibility alternative and degrade gracefully.
+
+#### 14.2 Tier 4 Validation Rules
+
+Preconditions (all must pass):
+- Budget: `tier4_budget_remaining > 0`
+- Peak significance: `Climax_Score ≥ 99th percentile` OR `Narrative_Pivot == true`
+- Diegesis: `is_theme_compatible(t4_id, Base_Theme, Palette)`
+- Cognitive: `Passage_Complexity ≤ 70th percentile` OR `t4_id in clarifying_effects`
+- Safety: `photosensitivity_ok` and `motion_ok` given user profile
+- Device: `device_preflight_ok(t4_id)`
+- Spacing: `words_since_last_t4 ≥ 1500`
+- Orchestration: no Tier 3 haptic+audio within ±2s window
+
+Pseudo-rule integration:
+
+```yaml
+RULE T4.1 (Eligibility)
+IF tier4_budget_remaining > 0
+  AND (climax_percentile >= 0.99 OR narrative_pivot == true)
+  AND diegesis_ok(t4_id, base_theme, palette)
+  AND complexity_ok(passage_complexity)
+  AND safety_ok(user_accessibility_profile, t4_id)
+  AND device_preflight_ok(t4_id)
+  AND words_since_last_t4 >= 1500
+THEN allow_tier4_candidate(t4_id)
+ELSE suppress
+
+RULE T4.2 (Budget Decrement)
+ON deploy(t4_id): tier4_budget_remaining -= 1; last_t4_word_index = current_word_index
+
+RULE T4.3 (Orchestration)
+FOR 300 words after T4: suppress Tier 3 accents; cap Tier 2 intensity; keep Tier 1 calming
+```
+
+#### 14.3 Schema Extension (Training/Inference)
+
+Add Tier 4 state to the JSONL schema:
+
+```json
+{
+  "tier4_budget_remaining": 2,
+  "last_tier4_word_index": 48210,
+  "user_accessibility_profile": {"photosensitive": false, "motion_sensitive": true},
+  "device_preflight": {"display": true, "audio": true, "haptics": false, "sensor_tilt": true},
+  "tier4_candidate": {
+    "id": "t4.meta.text_corruption_bloom",
+    "eligibility_checks": {
+      "climax_percentile": 0.991,
+      "narrative_pivot": true,
+      "diegesis_ok": true,
+      "complexity_pctl": 0.52,
+      "distance_from_last_t4_words": 4200,
+      "safety_ok": true,
+      "device_preflight_ok": true
+    },
+    "fallback_plan": {"visual": "static_corruption_frame", "audio": "none"}
+  }
+}
+```
+
+#### 14.4 Validator Contract (Deterministic)
+
+```typescript
+type Tier4ValidationResult = {
+  eligible: boolean;
+  reasons: string[];
+  fallbackPlan?: { visual?: string; audio?: string; interaction?: string };
+}
+
+function validateTier4(
+  t4Id: string,
+  ctx: {
+    baseTheme: string; palette: string; climaxPercentile: number; narrativePivot: boolean;
+    passageComplexityPercentile: number; tier4BudgetRemaining: number; wordsSinceLastT4: number;
+    accessibility: { photosensitive: boolean; motionSensitive: boolean };
+    device: { display: boolean; audio: boolean; haptics: boolean; sensorTilt: boolean };
+  }
+): Tier4ValidationResult
+```
+
 
