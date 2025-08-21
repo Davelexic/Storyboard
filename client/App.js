@@ -37,6 +37,46 @@ export default function App() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const fadeAnim = new Animated.Value(1);
 
+  const loadPreferences = async () => {
+    try {
+      const res = await fetch(`${API_URL}/users/me/preferences`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const prefs = await res.json();
+        setEffectsEnabled(prefs.effectsEnabled);
+        setFontSize(prefs.fontSize);
+        setBrightness(prefs.brightness);
+        setEffectIntensity(prefs.effectIntensity);
+      }
+    } catch (err) {
+      console.error('Failed to load preferences', err);
+    }
+  };
+
+  const savePreferences = async () => {
+    if (!token) return;
+    const prefs = { effectsEnabled, fontSize, brightness, effectIntensity };
+    try {
+      await fetch(`${API_URL}/users/me/preferences`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(prefs),
+      });
+    } catch (err) {
+      console.error('Failed to save preferences', err);
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      loadPreferences();
+    }
+  }, [token]);
+
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Error', 'Please enter both email and password');
@@ -239,6 +279,7 @@ export default function App() {
     content = (
       <SettingsScreen
         onBack={() => setScreen('reader')}
+        onSave={savePreferences}
         effectsEnabled={effectsEnabled}
         setEffectsEnabled={setEffectsEnabled}
         fontSize={fontSize}
