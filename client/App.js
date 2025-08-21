@@ -17,6 +17,12 @@ import {
 } from 'react-native';
 import SettingsScreen from './components/SettingsScreen';
 import BookUpload from './components/BookUpload';
+import {
+  fetchBookMarkup,
+  loadPreferencesLocal,
+  savePreferencesLocal,
+} from './utils/storage';
+import { enqueue, flushQueue } from './utils/syncQueue';
 
 const API_URL = 'http://localhost:8000';
 const { width, height } = Dimensions.get('window');
@@ -36,6 +42,62 @@ export default function App() {
   const [effectIntensity, setEffectIntensity] = useState(0.5);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const fadeAnim = new Animated.Value(1);
+
+  const loadPreferences = async () => {
+    const local = await loadPreferencesLocal();
+    if (local) {
+      setEffectsEnabled(local.effectsEnabled);
+      setFontSize(local.fontSize);
+      setBrightness(local.brightness);
+      setEffectIntensity(local.effectIntensity);
+    }
+    try {
+      const res = await fetch(`${API_URL}/users/me/preferences`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const prefs = await res.json();
+        setEffectsEnabled(prefs.effectsEnabled);
+        setFontSize(prefs.fontSize);
+        setBrightness(prefs.brightness);
+        setEffectIntensity(prefs.effectIntensity);
+        await savePreferencesLocal(prefs);
+      }
+    } catch (err) {
+      console.error('Failed to load preferences', err);
+    }
+  };
+
+  const savePreferences = async () => {
+    const prefs = { effectsEnabled, fontSize, brightness, effectIntensity };
+    await savePreferencesLocal(prefs);
+    if (!token) return;
+    try {
+      await fetch(`${API_URL}/users/me/preferences`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(prefs),
+      });
+    } catch (err) {
+      await enqueue({ type: 'savePreferences', payload: prefs });
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      loadPreferences();
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    flushQueue(token);
+    const id = setInterval(() => flushQueue(token), 5000);
+    return () => clearInterval(id);
+  }, [token]);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -108,11 +170,7 @@ export default function App() {
   const openBook = async (id) => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/books/${id}/markup`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error('Failed to load book');
-      const data = await res.json();
+      const data = await fetchBookMarkup(id, token);
       setMarkup(data);
       setCurrentChapter(0);
       setScreen('reader');
@@ -239,6 +297,7 @@ export default function App() {
     content = (
       <SettingsScreen
         onBack={() => setScreen('reader')}
+        onSave={savePreferences}
         effectsEnabled={effectsEnabled}
         setEffectsEnabled={setEffectsEnabled}
         fontSize={fontSize}

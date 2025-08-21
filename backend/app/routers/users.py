@@ -4,7 +4,12 @@ from sqlmodel import Session, select
 
 from ..db import get_session
 from ..models import User
-from ..security import create_access_token, get_password_hash, verify_password
+from ..security import (
+    create_access_token,
+    get_password_hash,
+    verify_password,
+    get_current_user,
+)
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -22,6 +27,13 @@ class UserLogin(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class Preferences(BaseModel):
+    effectsEnabled: bool = True
+    fontSize: int = 16
+    brightness: float = 1.0
+    effectIntensity: float = 1.0
 
 
 @router.post("/register", response_model=Token)
@@ -57,3 +69,21 @@ def read_user(user_id: int, session: Session = Depends(get_session)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+
+@router.get("/me/preferences", response_model=Preferences)
+def get_preferences(current_user: User = Depends(get_current_user)):
+    return Preferences(**(current_user.preferences or {}))
+
+
+@router.put("/me/preferences", response_model=Preferences)
+def update_preferences(
+    prefs: Preferences,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    current_user.preferences = prefs.dict()
+    session.add(current_user)
+    session.commit()
+    session.refresh(current_user)
+    return Preferences(**current_user.preferences)

@@ -10,9 +10,10 @@ import {
   Slider,
 } from 'react-native';
 
-export default function SettingsScreen({ 
-  onBack, 
-  effectsEnabled, 
+export default function SettingsScreen({
+  onBack,
+  onSave,
+  effectsEnabled,
   setEffectsEnabled,
   fontSize,
   setFontSize,
@@ -21,13 +22,19 @@ export default function SettingsScreen({
   effectIntensity,
   setEffectIntensity
 }) {
+  const handleBack = () => {
+    if (onSave) {
+      onSave();
+    }
+    onBack();
+  };
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={onBack}>
+        <TouchableOpacity onPress={handleBack}>
           <Text style={styles.backButton}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Settings</Text>
