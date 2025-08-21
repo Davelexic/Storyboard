@@ -1,4 +1,3 @@
-
 import zipfile
 
 
@@ -73,16 +72,25 @@ def test_upload_book_success(client, tmp_path):
             headers=headers,
         )
     assert resp.status_code == 200
-    data = resp.json()
-    assert data["bookTitle"] == "Sample Book"
+    job_id = resp.json()["job_id"]
+
+    status_resp = client.get(f"/books/jobs/{job_id}/status", headers=headers)
+    assert status_resp.status_code == 200
+    assert status_resp.json()["status"] == "completed"
+
+    result_resp = client.get(f"/books/jobs/{job_id}/result", headers=headers)
+    assert result_resp.status_code == 200
+    markup = result_resp.json()
+    assert markup["bookTitle"] == "Sample Book"
 
     list_resp = client.get("/books/", headers=headers)
     assert list_resp.status_code == 200
     books = list_resp.json()
+    assert books[0]["id"] == job_id
     assert books[0]["markup"]["bookTitle"] == "Sample Book"
 
 
-def test_get_book_markup(client, tmp_path):
+def test_job_status_and_result(client, tmp_path):
     client.post("/users/register", json={"email": "e@example.com", "password": "secret"})
     login_resp = client.post(
         "/users/login", json={"email": "e@example.com", "password": "secret"}
@@ -92,18 +100,21 @@ def test_get_book_markup(client, tmp_path):
 
     epub_path = _create_sample_epub(tmp_path)
     with open(epub_path, "rb") as f:
-        client.post(
+        upload_resp = client.post(
             "/books/upload",
             files={"file": ("sample.epub", f, "application/epub+zip")},
             headers=headers,
         )
 
-    list_resp = client.get("/books/", headers=headers)
-    book_id = list_resp.json()[0]["id"]
+    job_id = upload_resp.json()["job_id"]
 
-    resp = client.get(f"/books/{book_id}/markup", headers=headers)
-    assert resp.status_code == 200
-    data = resp.json()
+    status_resp = client.get(f"/books/jobs/{job_id}/status", headers=headers)
+    assert status_resp.status_code == 200
+    assert status_resp.json()["status"] == "completed"
+
+    result_resp = client.get(f"/books/jobs/{job_id}/result", headers=headers)
+    assert result_resp.status_code == 200
+    data = result_resp.json()
     assert data["bookTitle"] == "Sample Book"
 
 

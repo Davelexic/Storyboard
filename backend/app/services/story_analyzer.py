@@ -78,8 +78,9 @@ class StoryAnalyzer:
             
             # Step 6: Sparsity Control
             final_result = self.sparsity_controller.enforce_sparsity_rules(validated_markup)
+            final_result['bookTitle'] = parsed_book.get('title', 'Unknown')
             logger.info("Analysis and enhancement pipeline completed successfully")
-            
+
             return final_result
             
         except Exception as e:
@@ -157,7 +158,6 @@ class StoryAnalyzer:
             })
         
         return {
-            'bookTitle': enhanced_chapters[0].get('bookTitle', 'Unknown'),
             'theme': self._determine_book_theme(enhanced_chapters),
             'chapters': final_chapters,
             'analysis_metadata': {
