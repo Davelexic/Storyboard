@@ -8,6 +8,7 @@ raw book content into enhanced cinematic markup with intelligent effects.
 from __future__ import annotations
 from typing import Dict, List, Optional, Any
 import logging
+from collections import Counter
 
 from .structural_analyzer import StoryStructureAnalyzer
 from .character_analyzer import CharacterEmotionAnalyzer
@@ -15,6 +16,7 @@ from .emotion_scorer import EmotionalIntensityScorer
 from .effect_selector import IntelligentEffectSelector
 from .quality_controller import EffectQualityController
 from .sparsity_controller import EffectSparsityController
+from .theme_classifier import ThemeClassifier
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +37,9 @@ class StoryAnalyzer:
         self.effect_selector = IntelligentEffectSelector()
         self.quality_controller = EffectQualityController()
         self.sparsity_controller = EffectSparsityController()
+        self.theme_classifier = ThemeClassifier()
+        # Cache for chapter embeddings used in theme detection
+        self._chapter_embedding_cache: Dict[int, Dict[str, float]] = {}
         
         logger.info("StoryAnalyzer initialized with all components")
     
@@ -188,33 +193,33 @@ class StoryAnalyzer:
             'peak_emotion': max(scores),
             'emotional_variance': self._calculate_variance(scores)
         }
-    
+
+    def _get_chapter_embedding(self, chapter_index: int, text: str) -> Dict[str, float]:
+        """Return cached embedding for a chapter or generate a new one."""
+        if chapter_index in self._chapter_embedding_cache:
+            return self._chapter_embedding_cache[chapter_index]
+
+        embedding = self.theme_classifier.encode(text)
+        self._chapter_embedding_cache[chapter_index] = embedding
+        return embedding
+
     def _determine_book_theme(self, chapters: List[Dict]) -> str:
-        """Determine the overall theme of the book based on content analysis."""
-        # Simple theme detection - can be enhanced with NLP
-        all_text = ' '.join([
-            item.get('text', '') 
-            for chapter in chapters 
-            for item in chapter.get('content', [])
-        ]).lower()
-        
-        theme_keywords = {
-            'historical': ['king', 'queen', 'castle', 'sword', 'battle', 'ancient'],
-            'romance': ['love', 'heart', 'kiss', 'romance', 'passion'],
-            'adventure': ['journey', 'quest', 'adventure', 'explore', 'discover'],
-            'mystery': ['secret', 'mystery', 'clue', 'investigate', 'solve'],
-            'scifi': ['space', 'future', 'robot', 'technology', 'planet']
-        }
-        
-        theme_scores = {}
-        for theme, keywords in theme_keywords.items():
-            score = sum(1 for keyword in keywords if keyword in all_text)
-            theme_scores[theme] = score
-        
-        if theme_scores:
-            return max(theme_scores, key=theme_scores.get)
-        
-        return 'general'
+        """Determine the overall theme of the book using a classifier."""
+        if not chapters:
+            return 'general'
+
+        combined_embedding: Counter = Counter()
+        for idx, chapter in enumerate(chapters):
+            chapter_text = ' '.join(
+                item.get('text', '') for item in chapter.get('content', [])
+            )
+            embedding = self._get_chapter_embedding(idx, chapter_text)
+            combined_embedding.update(embedding)
+
+        label, confidence = self.theme_classifier.predict(combined_embedding)
+        if confidence < 0.5:
+            return 'general'
+        return label
     
     def _analyze_effect_distribution(self, effect_history: List[Dict]) -> Dict[str, Any]:
         """Analyze how effects are distributed throughout the book."""
