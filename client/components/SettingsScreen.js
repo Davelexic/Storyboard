@@ -9,6 +9,7 @@ import {
   Switch,
   Slider,
 } from 'react-native';
+import { logEvent } from '../services/analytics';
 
 export default function SettingsScreen({
   onBack,
@@ -97,15 +98,18 @@ export default function SettingsScreen({
           <Text style={styles.sectionTitle}>Cinematic Effects</Text>
           
           {/* Enable Effects */}
-          <View style={styles.settingItem}>
-            <Text style={styles.settingLabel}>Enable Effects</Text>
-            <Switch
-              value={effectsEnabled}
-              onValueChange={setEffectsEnabled}
-              trackColor={{ false: '#bdc3c7', true: '#3498db' }}
-              thumbColor={effectsEnabled ? '#ffffff' : '#f4f3f4'}
-            />
-          </View>
+            <View style={styles.settingItem}>
+              <Text style={styles.settingLabel}>Enable Effects</Text>
+              <Switch
+                value={effectsEnabled}
+                onValueChange={(value) => {
+                  setEffectsEnabled(value);
+                  logEvent('effect_toggle', { enabled: value });
+                }}
+                trackColor={{ false: '#bdc3c7', true: '#3498db' }}
+                thumbColor={effectsEnabled ? '#ffffff' : '#f4f3f4'}
+              />
+            </View>
 
           {/* Per-effect Configuration */}
           {effectsEnabled &&

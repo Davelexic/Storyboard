@@ -23,6 +23,7 @@ import {
   savePreferencesLocal,
 } from './utils/storage';
 import { enqueue, flushQueue } from './utils/syncQueue';
+import { logEvent } from './services/analytics';
 
 const API_URL = 'http://localhost:8000';
 const { width, height } = Dimensions.get('window');
@@ -275,6 +276,7 @@ export default function App() {
         Animated.timing(fadeAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
         Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true })
       ]).start();
+      logEvent('chapter_complete', { chapter: currentChapter + 1 });
       setCurrentChapter(currentChapter + 1);
     }
   };
@@ -488,8 +490,12 @@ export default function App() {
             <Text style={styles.controlText}>A+</Text>
           </TouchableOpacity>
           
-          <TouchableOpacity 
-            onPress={() => setEffectsEnabled(!effectsEnabled)} 
+          <TouchableOpacity
+            onPress={() => {
+              const enabled = !effectsEnabled;
+              setEffectsEnabled(enabled);
+              logEvent('effect_toggle', { enabled });
+            }}
             style={[styles.controlButton, !effectsEnabled && styles.controlButtonDisabled]}
           >
             <Text style={styles.controlText}>{effectsEnabled ? '✨' : '⚪'}</Text>

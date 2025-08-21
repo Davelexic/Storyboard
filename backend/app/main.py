@@ -2,7 +2,7 @@ from fastapi import FastAPI
 
 from .config import settings
 from .db import init_db
-from .routers import books, users
+from .routers import books, users, analytics
 
 app = FastAPI(title=settings.app_name)
 
@@ -15,6 +15,7 @@ def on_startup() -> None:
 # Router includes
 app.include_router(users.router)
 app.include_router(books.router)
+app.include_router(analytics.router)
 
 
 @app.get("/")
