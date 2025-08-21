@@ -1,51 +1,139 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, BackgroundTasks
 from sqlmodel import Session, select
+from typing import List
+import os
+import tempfile
+import shutil
+from datetime import datetime
 
 from ..db import get_session
 from ..models import Book, User
 from ..security import get_current_user
 from ..services.parser import parse_epub
 from ..services.story_analyzer import StoryAnalyzer
-import os
-import tempfile
+from ..config import settings
 
 router = APIRouter(prefix="/books", tags=["books"])
 
 story_analyzer = StoryAnalyzer()
 
 
+def process_book_background(book_id: int, file_path: str, session: Session):
+    """Background task to process book analysis."""
+    try:
+        # Update status to processing
+        book = session.get(Book, book_id)
+        if book:
+            book.processing_status = "processing"
+            book.updated_at = datetime.utcnow()
+            session.commit()
+        
+        # Parse EPUB
+        parsed_book = parse_epub(file_path)
+        
+        # Run analysis
+        markup = story_analyzer.analyze_and_enhance(parsed_book)
+        
+        # Update book with results
+        book = session.get(Book, book_id)
+        if book:
+            book.markup = markup
+            book.processing_status = "completed"
+            book.processed_at = datetime.utcnow()
+            book.theme = markup.get('theme', 'general')
+            book.total_chapters = len(markup.get('chapters', []))
+            
+            # Calculate effect statistics
+            total_effects = 0
+            for chapter in markup.get('chapters', []):
+                for content in chapter.get('content', []):
+                    total_effects += len(content.get('effects', []))
+            
+            book.total_effects = total_effects
+            book.effect_density = total_effects / max(1, book.total_chapters)
+            
+            session.commit()
+            
+    except Exception as e:
+        # Update status to failed
+        book = session.get(Book, book_id)
+        if book:
+            book.processing_status = "failed"
+            book.processing_error = str(e)
+            book.updated_at = datetime.utcnow()
+            session.commit()
+
+
 @router.post("/upload")
 async def upload_book(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    if file.content_type != "application/epub+zip":
-        raise HTTPException(status_code=400, detail="Invalid file type")
+    """Upload and process an EPUB file."""
+    
+    # Validate file type
+    if not file.filename.lower().endswith('.epub'):
+        raise HTTPException(status_code=400, detail="Only EPUB files are supported")
+    
+    # Validate file size
+    if file.size and file.size > settings.max_file_size:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"File size exceeds maximum limit of {settings.max_file_size // (1024*1024)}MB"
+        )
+    
     try:
+        # Read file content
         contents = await file.read()
+        
+        # Create temporary file
         with tempfile.NamedTemporaryFile(delete=False, suffix=".epub") as tmp:
             tmp.write(contents)
             tmp_path = tmp.name
-
-        parsed_book = parse_epub(tmp_path)
-        markup = story_analyzer.analyze_and_enhance(parsed_book)
-
+        
+        # Parse basic metadata first
+        try:
+            parsed_book = parse_epub(tmp_path)
+        except Exception as e:
+            os.unlink(tmp_path)
+            raise HTTPException(status_code=400, detail=f"Invalid EPUB file: {str(e)}")
+        
+        # Create book record
         book = Book(
             title=parsed_book.get("title", file.filename),
+            author=parsed_book.get("author", "Unknown Author"),
+            language=parsed_book.get("language", "en"),
+            identifier=parsed_book.get("identifier"),
             owner_id=current_user.id,
-            markup=markup,
+            file_size=len(contents),
+            file_path=tmp_path,
+            processing_status="pending",
+            total_chapters=parsed_book.get("total_chapters", 0),
+            book_metadata=parsed_book.get("parsing_metadata", {})
         )
+        
         session.add(book)
         session.commit()
         session.refresh(book)
+        
+        # Start background processing
+        background_tasks.add_task(process_book_background, book.id, tmp_path, session)
+        
+        return {
+            "job_id": book.id,
+            "status": "pending",
+            "message": "Book uploaded successfully. Processing started in background."
+        }
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail="Failed to process EPUB file") from e
-    finally:
-        if "tmp_path" in locals() and os.path.exists(tmp_path):
-            os.remove(tmp_path)
-
-    return {"job_id": book.id}
+        # Clean up temporary file if it exists
+        if 'tmp_path' in locals() and os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+        raise HTTPException(status_code=500, detail=f"Failed to process EPUB file: {str(e)}")
 
 
 @router.get("/jobs/{job_id}/status")
@@ -54,11 +142,19 @@ def get_job_status(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
+    """Get the status of a book processing job."""
     book = session.get(Book, job_id)
     if not book or book.owner_id != current_user.id:
         raise HTTPException(status_code=404, detail="Job not found")
-    status = "completed" if book.markup is not None else "processing"
-    return {"job_id": job_id, "status": status}
+    
+    return {
+        "job_id": job_id,
+        "status": book.processing_status,
+        "error": book.processing_error,
+        "created_at": book.created_at,
+        "updated_at": book.updated_at,
+        "processed_at": book.processed_at
+    }
 
 
 @router.get("/jobs/{job_id}/result")
@@ -67,33 +163,34 @@ def get_job_result(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
+    """Get the processed markup result."""
     book = session.get(Book, job_id)
     if not book or book.owner_id != current_user.id:
         raise HTTPException(status_code=404, detail="Job not found")
+    
+    if book.processing_status != "completed":
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Job not completed. Current status: {book.processing_status}"
+        )
+    
     if book.markup is None:
         raise HTTPException(status_code=404, detail="Result not available")
+    
     return book.markup
 
 
-@router.post("/", response_model=Book)
-def create_book(
-    book: Book,
-    session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user),
-):
-    book.owner_id = current_user.id
-    session.add(book)
-    session.commit()
-    session.refresh(book)
-    return book
-
-
-@router.get("/", response_model=list[Book])
+@router.get("/", response_model=List[Book])
 def read_books(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    return session.exec(select(Book).where(Book.owner_id == current_user.id)).all()
+    """Get all books for the current user."""
+    return session.exec(
+        select(Book)
+        .where(Book.owner_id == current_user.id)
+        .order_by(Book.created_at.desc())
+    ).all()
 
 
 @router.get("/{book_id}", response_model=Book)
@@ -102,6 +199,7 @@ def read_book(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
+    """Get a specific book by ID."""
     book = session.get(Book, book_id)
     if not book or book.owner_id != current_user.id:
         raise HTTPException(status_code=404, detail="Book not found")
@@ -114,9 +212,44 @@ def read_book_markup(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
+    """Get the processed markup for a book."""
     book = session.get(Book, book_id)
     if not book or book.owner_id != current_user.id:
         raise HTTPException(status_code=404, detail="Book not found")
+    
+    if book.processing_status != "completed":
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Book not fully processed. Status: {book.processing_status}"
+        )
+    
     if book.markup is None:
         raise HTTPException(status_code=404, detail="Markup not found")
+    
     return book.markup
+
+
+@router.delete("/{book_id}")
+def delete_book(
+    book_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    """Delete a book and its associated files."""
+    book = session.get(Book, book_id)
+    if not book or book.owner_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Book not found")
+    
+    try:
+        # Delete associated file if it exists
+        if book.file_path and os.path.exists(book.file_path):
+            os.unlink(book.file_path)
+        
+        # Delete from database
+        session.delete(book)
+        session.commit()
+        
+        return {"message": "Book deleted successfully"}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete book: {str(e)}")

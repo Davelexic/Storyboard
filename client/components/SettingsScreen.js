@@ -16,14 +16,16 @@ export default function SettingsScreen({
   onSave,
   effectsEnabled,
   setEffectsEnabled,
-  effectsConfig,
-  setEffectsConfig,
   fontSize,
   setFontSize,
   brightness,
   setBrightness,
-  adaptiveBrightness,
-  setAdaptiveBrightness,
+  effectIntensity,
+  setEffectIntensity,
+  adaptiveBrightness = false,
+  setAdaptiveBrightness = () => {},
+  effectsConfig = {},
+  setEffectsConfig = () => {},
 }) {
   const handleBack = () => {
     if (onSave) {
@@ -31,6 +33,30 @@ export default function SettingsScreen({
     }
     onBack();
   };
+
+  // Default effects configuration if not provided
+  const defaultEffectsConfig = {
+    text_style: { enabled: true, intensity: 0.5 },
+    word_effect: { enabled: true, intensity: 0.5 },
+    sound: { enabled: false, intensity: 0.3 },
+    haptic: { enabled: false, intensity: 0.2 },
+  };
+
+  const currentEffectsConfig = Object.keys(effectsConfig).length > 0 
+    ? effectsConfig 
+    : defaultEffectsConfig;
+
+  const updateEffectsConfig = (key, field, value) => {
+    const newConfig = {
+      ...currentEffectsConfig,
+      [key]: {
+        ...currentEffectsConfig[key],
+        [field]: value
+      }
+    };
+    setEffectsConfig(newConfig);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -98,33 +124,49 @@ export default function SettingsScreen({
           <Text style={styles.sectionTitle}>Cinematic Effects</Text>
           
           {/* Enable Effects */}
+          <View style={styles.settingItem}>
+            <Text style={styles.settingLabel}>Enable Effects</Text>
+            <Switch
+              value={effectsEnabled}
+              onValueChange={(value) => {
+                setEffectsEnabled(value);
+                logEvent('effect_toggle', { enabled: value });
+              }}
+              trackColor={{ false: '#bdc3c7', true: '#3498db' }}
+              thumbColor={effectsEnabled ? '#ffffff' : '#f4f3f4'}
+            />
+          </View>
+
+          {/* Global Effect Intensity */}
+          {effectsEnabled && (
             <View style={styles.settingItem}>
-              <Text style={styles.settingLabel}>Enable Effects</Text>
-              <Switch
-                value={effectsEnabled}
-                onValueChange={(value) => {
-                  setEffectsEnabled(value);
-                  logEvent('effect_toggle', { enabled: value });
-                }}
-                trackColor={{ false: '#bdc3c7', true: '#3498db' }}
-                thumbColor={effectsEnabled ? '#ffffff' : '#f4f3f4'}
+              <Text style={styles.settingLabel}>
+                Global Intensity: {Math.round(effectIntensity * 100)}%
+              </Text>
+              <Slider
+                style={styles.slider}
+                minimumValue={0.1}
+                maximumValue={1.0}
+                value={effectIntensity}
+                onValueChange={setEffectIntensity}
+                minimumTrackTintColor="#3498db"
+                maximumTrackTintColor="#bdc3c7"
+                thumbStyle={styles.sliderThumb}
               />
             </View>
+          )}
 
           {/* Per-effect Configuration */}
           {effectsEnabled &&
-            Object.entries(effectsConfig).map(([name, config]) => (
+            Object.entries(currentEffectsConfig).map(([name, config]) => (
               <View key={name}>
                 <View style={styles.settingItem}>
-                  <Text style={styles.settingLabel}>{name} Enabled</Text>
+                  <Text style={styles.settingLabel}>
+                    {name.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} Enabled
+                  </Text>
                   <Switch
                     value={config.enabled}
-                    onValueChange={(value) =>
-                      setEffectsConfig({
-                        ...effectsConfig,
-                        [name]: { ...config, enabled: value },
-                      })
-                    }
+                    onValueChange={(value) => updateEffectsConfig(name, 'enabled', value)}
                     trackColor={{ false: '#bdc3c7', true: '#3498db' }}
                     thumbColor={config.enabled ? '#ffffff' : '#f4f3f4'}
                   />
@@ -132,19 +174,14 @@ export default function SettingsScreen({
                 {config.enabled && (
                   <View style={styles.settingItem}>
                     <Text style={styles.settingLabel}>
-                      {name} Intensity: {Math.round(config.intensity * 100)}%
+                      {name.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} Intensity: {Math.round(config.intensity * 100)}%
                     </Text>
                     <Slider
                       style={styles.slider}
                       minimumValue={0.1}
                       maximumValue={1.0}
                       value={config.intensity}
-                      onValueChange={(value) =>
-                        setEffectsConfig({
-                          ...effectsConfig,
-                          [name]: { ...config, intensity: value },
-                        })
-                      }
+                      onValueChange={(value) => updateEffectsConfig(name, 'intensity', value)}
                       minimumTrackTintColor="#3498db"
                       maximumTrackTintColor="#bdc3c7"
                       thumbStyle={styles.sliderThumb}
@@ -153,6 +190,31 @@ export default function SettingsScreen({
                 )}
               </View>
             ))}
+        </View>
+
+        {/* Accessibility */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Accessibility</Text>
+          
+          <View style={styles.settingItem}>
+            <Text style={styles.settingLabel}>High Contrast</Text>
+            <Switch
+              value={false}
+              onValueChange={() => {}}
+              trackColor={{ false: '#bdc3c7', true: '#3498db' }}
+              thumbColor={'#f4f3f4'}
+            />
+          </View>
+          
+          <View style={styles.settingItem}>
+            <Text style={styles.settingLabel}>Reduce Motion</Text>
+            <Switch
+              value={false}
+              onValueChange={() => {}}
+              trackColor={{ false: '#bdc3c7', true: '#3498db' }}
+              thumbColor={'#f4f3f4'}
+            />
+          </View>
         </View>
 
         {/* About */}
