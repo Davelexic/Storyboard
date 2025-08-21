@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from sqlmodel import Session, select
 from typing import Dict
 
@@ -11,6 +11,11 @@ from ..security import (
     verify_password,
     get_current_user,
 )
+from ..utils.sanitization import (
+    sanitize_email,
+    sanitize_password,
+    SanitizationError,
+)
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -18,11 +23,39 @@ router = APIRouter(prefix="/users", tags=["users"])
 class UserCreate(BaseModel):
     email: str
     password: str
+    
+    @validator('email')
+    def validate_email(cls, v):
+        try:
+            return sanitize_email(v)
+        except SanitizationError as e:
+            raise ValueError(str(e))
+    
+    @validator('password')
+    def validate_password(cls, v):
+        try:
+            return sanitize_password(v, min_length=8)
+        except SanitizationError as e:
+            raise ValueError(str(e))
 
 
 class UserLogin(BaseModel):
     email: str
     password: str
+    
+    @validator('email')
+    def validate_email(cls, v):
+        try:
+            return sanitize_email(v)
+        except SanitizationError as e:
+            raise ValueError(str(e))
+    
+    @validator('password')
+    def validate_password(cls, v):
+        try:
+            return sanitize_password(v, min_length=8)
+        except SanitizationError as e:
+            raise ValueError(str(e))
 
 
 class Token(BaseModel):
@@ -46,6 +79,18 @@ class Preferences(BaseModel):
             "color": EffectConfig(),
         }
     )
+    
+    @validator('fontSize')
+    def validate_font_size(cls, v):
+        if not isinstance(v, int) or v < 8 or v > 72:
+            raise ValueError("Font size must be between 8 and 72")
+        return v
+    
+    @validator('brightness')
+    def validate_brightness(cls, v):
+        if not isinstance(v, (int, float)) or v < 0.1 or v > 2.0:
+            raise ValueError("Brightness must be between 0.1 and 2.0")
+        return float(v)
 
 
 @router.post("/register", response_model=Token)

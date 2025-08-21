@@ -11,6 +11,7 @@ from ..security import get_current_user
 from ..services.parser import parse_epub
 from ..services.story_analyzer import StoryAnalyzer
 from ..config import settings
+from ..utils.sanitization import sanitize_filename, SanitizationError
 
 router = APIRouter(prefix="/books", tags=["books"])
 
@@ -72,8 +73,17 @@ async def upload_book(
 ):
     """Upload and process an EPUB file."""
     
+    # Sanitize filename
+    try:
+        if file.filename:
+            sanitized_filename = sanitize_filename(file.filename)
+        else:
+            raise HTTPException(status_code=400, detail="No filename provided")
+    except SanitizationError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid filename: {str(e)}")
+    
     # Validate file type
-    if not file.filename.lower().endswith('.epub'):
+    if not sanitized_filename.lower().endswith('.epub'):
         raise HTTPException(status_code=400, detail="Only EPUB files are supported")
     
     # Validate file size
@@ -99,9 +109,9 @@ async def upload_book(
             os.unlink(tmp_path)
             raise HTTPException(status_code=400, detail=f"Invalid EPUB file: {str(e)}")
         
-        # Create book record
+        # Create book record with sanitized data
         book = Book(
-            title=parsed_book.get("title", file.filename),
+            title=parsed_book.get("title", sanitized_filename),
             author=parsed_book.get("author", "Unknown Author"),
             language=parsed_book.get("language", "en"),
             identifier=parsed_book.get("identifier"),
