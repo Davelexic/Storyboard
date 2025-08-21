@@ -3,36 +3,10 @@
  * Handles all communication with the backend API
  */
 
-// Configuration
-const API_CONFIG = {
-  BASE_URL: 'http://127.0.0.1:8003', // Updated to match our backend
-  TIMEOUT: 10000,
-  RETRY_ATTEMPTS: 3,
-};
+import API_CONFIG, { buildApiUrl, buildUrlWithParams } from '../config/api.js';
 
 // API endpoints
-const ENDPOINTS = {
-  // Authentication
-  LOGIN: '/users/login',
-  REGISTER: '/users/register',
-  
-  // Users
-  USERS: '/users/',
-  USER_PREFERENCES: '/users/me/preferences',
-  
-  // Books
-  BOOKS: '/books/',
-  BOOK_UPLOAD: '/books/upload',
-  BOOK_JOB_STATUS: '/books/jobs/{job_id}/status',
-  BOOK_JOB_RESULT: '/books/jobs/{job_id}/result',
-  BOOK_MARKUP: '/books/{book_id}/markup',
-  
-  // Analytics
-  ANALYTICS_EVENTS: '/analytics/events',
-  
-  // Health
-  HEALTH: '/',
-};
+const ENDPOINTS = API_CONFIG.ENDPOINTS;
 
 /**
  * API Client class
@@ -76,7 +50,7 @@ class ApiClient {
    * Make API request with error handling and retries
    */
   async request(endpoint, options = {}) {
-    const url = `${this.baseURL}${endpoint}`;
+    const url = buildApiUrl(endpoint);
     const config = {
       headers: this.getHeaders(),
       timeout: API_CONFIG.TIMEOUT,

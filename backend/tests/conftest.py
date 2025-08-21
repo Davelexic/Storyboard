@@ -3,8 +3,8 @@ from fastapi.testclient import TestClient
 from sqlmodel import SQLModel, Session, create_engine
 from sqlalchemy.pool import StaticPool
 
-from backend.app.main import app
-from backend.app.db import get_session
+from app.main import app
+from app.db import get_session
 
 
 @pytest.fixture(name="session")

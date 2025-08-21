@@ -14,5 +14,5 @@ const analytics = require('../services/analytics');
   await analytics.flushEvents();
   assert.strictEqual(analytics._getQueue().length, 0);
   assert.ok(sent && sent.events.length === 2);
-  console.log('analytics dispatch passed');
+  // Test passed successfully
 })();

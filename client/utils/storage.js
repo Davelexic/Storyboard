@@ -16,7 +16,9 @@ try {
   };
 }
 
-const API_URL = 'http://localhost:8000';
+import API_CONFIG, { buildApiUrl } from '../config/api.js';
+
+const API_URL = API_CONFIG.BASE_URL;
 
 const BOOK_PREFIX = 'book_';
 const PREFS_KEY = 'preferences';

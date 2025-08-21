@@ -8,4 +8,4 @@ const content = fs.readFileSync(file, 'utf8');
 assert.ok(content.includes('Adaptive Brightness'), 'missing adaptive brightness toggle');
 assert.ok(content.includes('effectsConfig'), 'missing per-effect configuration');
 assert.ok(content.includes('intensity'), 'missing effect intensity slider');
-console.log('settings screen ui passed');
+// Settings screen UI test passed

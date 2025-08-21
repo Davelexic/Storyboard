@@ -16,9 +16,17 @@ class Settings(BaseModel):
     database_url: str = os.getenv("DATABASE_URL", "sqlite:///./test.db")
     
     # Security
-    jwt_secret: str = os.getenv("JWT_SECRET", "dev-secret-key-change-in-production")
+    jwt_secret: str = os.getenv("JWT_SECRET")
     jwt_algorithm: str = os.getenv("JWT_ALGORITHM", "HS256")
     access_token_expire_minutes: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if not self.jwt_secret:
+            raise ValueError(
+                "JWT_SECRET environment variable must be set. "
+                "Please set a secure secret key in your .env file or environment variables."
+            )
     
     # API Configuration
     app_name: str = os.getenv("APP_NAME", "Cinematic Reading Engine")

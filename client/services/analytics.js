@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8000';
+const API_URL = 'http://127.0.0.1:8003';
 const queue = [];
 let flushing = false;
 

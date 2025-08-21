@@ -26,7 +26,7 @@ const { enqueue, flushQueue, _getQueue } = require('../utils/syncQueue');
   global.fetch = () => Promise.reject(new Error('network')); // simulate offline
   const data = await fetchBookMarkup(1, 'token');
   assert.strictEqual(data.bookTitle, 'Cached');
-  console.log('offline reading passed');
+  // Offline reading test passed
 
   // Sync test
   let called = false;
@@ -51,5 +51,5 @@ const { enqueue, flushQueue, _getQueue } = require('../utils/syncQueue');
   assert.strictEqual(flushed, 1);
   assert.strictEqual(queue.length, 0);
   assert.ok(called);
-  console.log('sync passed');
+  // Sync test passed
 })();

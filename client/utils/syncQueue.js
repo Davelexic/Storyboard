@@ -1,7 +1,7 @@
 const { storage } = require('./storage');
 
 const QUEUE_KEY = 'syncQueue';
-const API_URL = 'http://localhost:8000';
+const API_URL = 'http://127.0.0.1:8003';
 
 async function getQueue() {
   const raw = await storage.getItem(QUEUE_KEY);
