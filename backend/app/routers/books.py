@@ -7,11 +7,18 @@ from datetime import datetime
 
 from ..db import get_session
 from ..models import Book, User
-from ..security import get_current_user
+from ..middleware.auth import get_current_user
 from ..services.parser import parse_epub
 from ..services.story_analyzer import StoryAnalyzer
 from ..config import settings
 from ..utils.sanitization import sanitize_filename, SanitizationError
+from ..exceptions import (
+    ValidationError,
+    FileProcessingError,
+    BookProcessingError,
+    ResourceNotFoundError,
+    DatabaseError
+)
 
 router = APIRouter(prefix="/books", tags=["books"])
 
@@ -78,19 +85,19 @@ async def upload_book(
         if file.filename:
             sanitized_filename = sanitize_filename(file.filename)
         else:
-            raise HTTPException(status_code=400, detail="No filename provided")
+            raise ValidationError("No filename provided", field="filename")
     except SanitizationError as e:
-        raise HTTPException(status_code=400, detail=f"Invalid filename: {str(e)}")
+        raise ValidationError(f"Invalid filename: {str(e)}", field="filename")
     
     # Validate file type
     if not sanitized_filename.lower().endswith('.epub'):
-        raise HTTPException(status_code=400, detail="Only EPUB files are supported")
+        raise FileProcessingError("Only EPUB files are supported", file_type="epub")
     
     # Validate file size
     if file.size and file.size > settings.max_file_size:
-        raise HTTPException(
-            status_code=400, 
-            detail=f"File size exceeds maximum limit of {settings.max_file_size // (1024*1024)}MB"
+        raise FileProcessingError(
+            f"File size exceeds maximum limit of {settings.max_file_size // (1024*1024)}MB",
+            file_type="epub"
         )
     
     try:
@@ -107,7 +114,7 @@ async def upload_book(
             parsed_book = parse_epub(tmp_path)
         except Exception as e:
             os.unlink(tmp_path)
-            raise HTTPException(status_code=400, detail=f"Invalid EPUB file: {str(e)}")
+            raise FileProcessingError(f"Invalid EPUB file: {str(e)}", file_type="epub")
         
         # Create book record with sanitized data
         book = Book(
@@ -136,13 +143,13 @@ async def upload_book(
             "message": "Book uploaded successfully. Processing started in background."
         }
         
-    except HTTPException:
+    except (HTTPException, CineiReaderException):
         raise
     except Exception as e:
         # Clean up temporary file if it exists
         if 'tmp_path' in locals() and os.path.exists(tmp_path):
             os.unlink(tmp_path)
-        raise HTTPException(status_code=500, detail=f"Failed to process EPUB file: {str(e)}")
+        raise BookProcessingError(f"Failed to process EPUB file: {str(e)}")
 
 
 @router.get("/jobs/{job_id}/status")
@@ -154,7 +161,7 @@ def get_job_status(
     """Get the status of a book processing job."""
     book = session.get(Book, job_id)
     if not book or book.owner_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise ResourceNotFoundError("Job not found", resource_type="job", resource_id=str(job_id))
     
     return {
         "job_id": job_id,
@@ -175,16 +182,16 @@ def get_job_result(
     """Get the processed markup result."""
     book = session.get(Book, job_id)
     if not book or book.owner_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise ResourceNotFoundError("Job not found", resource_type="job", resource_id=str(job_id))
     
     if book.processing_status != "completed":
-        raise HTTPException(
-            status_code=400, 
-            detail=f"Job not completed. Current status: {book.processing_status}"
+        raise BookProcessingError(
+            f"Job not completed. Current status: {book.processing_status}",
+            book_id=job_id
         )
     
     if book.markup is None:
-        raise HTTPException(status_code=404, detail="Result not available")
+        raise ResourceNotFoundError("Result not available", resource_type="markup", resource_id=str(job_id))
     
     return book.markup
 
@@ -211,7 +218,7 @@ def read_book(
     """Get a specific book by ID."""
     book = session.get(Book, book_id)
     if not book or book.owner_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Book not found")
+        raise ResourceNotFoundError("Book not found", resource_type="book", resource_id=str(book_id))
     return book
 
 
@@ -224,16 +231,16 @@ def read_book_markup(
     """Get the processed markup for a book."""
     book = session.get(Book, book_id)
     if not book or book.owner_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Book not found")
+        raise ResourceNotFoundError("Book not found", resource_type="book", resource_id=str(book_id))
     
     if book.processing_status != "completed":
-        raise HTTPException(
-            status_code=400, 
-            detail=f"Book not fully processed. Status: {book.processing_status}"
+        raise BookProcessingError(
+            f"Book not fully processed. Status: {book.processing_status}",
+            book_id=book_id
         )
     
     if book.markup is None:
-        raise HTTPException(status_code=404, detail="Markup not found")
+        raise ResourceNotFoundError("Markup not found", resource_type="markup", resource_id=str(book_id))
     
     return book.markup
 
@@ -247,7 +254,7 @@ def delete_book(
     """Delete a book and its associated files."""
     book = session.get(Book, book_id)
     if not book or book.owner_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Book not found")
+        raise ResourceNotFoundError("Book not found", resource_type="book", resource_id=str(book_id))
     
     try:
         # Delete associated file if it exists
@@ -261,4 +268,4 @@ def delete_book(
         return {"message": "Book deleted successfully"}
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to delete book: {str(e)}")
+        raise DatabaseError(f"Failed to delete book: {str(e)}", operation="delete")

@@ -16,6 +16,12 @@ from ..utils.sanitization import (
     sanitize_password,
     SanitizationError,
 )
+from ..exceptions import (
+    ValidationError,
+    AuthenticationError,
+    ConflictError,
+    ResourceNotFoundError
+)
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -97,7 +103,7 @@ class Preferences(BaseModel):
 def register(user: UserCreate, session: Session = Depends(get_session)):
     existing = session.exec(select(User).where(User.email == user.email)).first()
     if existing:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise ConflictError("Email already registered", conflict_type="email_exists")
     db_user = User(email=user.email, hashed_password=get_password_hash(user.password))
     session.add(db_user)
     session.commit()
@@ -110,7 +116,7 @@ def register(user: UserCreate, session: Session = Depends(get_session)):
 def login(user: UserLogin, session: Session = Depends(get_session)):
     db_user = session.exec(select(User).where(User.email == user.email)).first()
     if not db_user or not verify_password(user.password, db_user.hashed_password):
-        raise HTTPException(status_code=400, detail="Incorrect email or password")
+        raise AuthenticationError("Incorrect email or password")
     token = create_access_token({"sub": str(db_user.id)})
     return Token(access_token=token)
 
@@ -124,7 +130,7 @@ def read_users(session: Session = Depends(get_session)):
 def read_user(user_id: int, session: Session = Depends(get_session)):
     user = session.get(User, user_id)
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise ResourceNotFoundError("User not found", resource_type="user", resource_id=str(user_id))
     return user
 
 

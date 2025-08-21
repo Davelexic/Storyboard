@@ -17,6 +17,8 @@ import {
 } from 'react-native';
 import SettingsScreen from './components/SettingsScreen';
 import BookUpload from './components/BookUpload';
+import ErrorBoundary from './components/ErrorBoundary';
+import NetworkErrorHandler from './components/NetworkErrorHandler';
 import {
   fetchBookMarkup,
   loadPreferencesLocal,
@@ -512,7 +514,13 @@ export default function App() {
     );
   }
 
-  return content;
+  return (
+    <ErrorBoundary>
+      <NetworkErrorHandler>
+        {content}
+      </NetworkErrorHandler>
+    </ErrorBoundary>
+  );
 }
 
 const styles = StyleSheet.create({

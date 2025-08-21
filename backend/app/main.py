@@ -4,6 +4,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
 from .db import init_db
 from .routers import books, users, analytics
+from .middleware.rate_limiter import rate_limit_middleware
+from .middleware.auth import auth_middleware_func
+from .middleware.exception_handler import setup_exception_handlers
+from .middleware.logging_middleware import logging_middleware
 
 app = FastAPI(title=settings.app_name)
 
@@ -21,6 +25,18 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+# Add rate limiting middleware
+app.middleware("http")(rate_limit_middleware)
+
+# Add logging middleware (first to catch all requests)
+app.middleware("http")(logging_middleware)
+
+# Add authentication middleware
+app.middleware("http")(auth_middleware_func)
+
+# Setup exception handlers
+setup_exception_handlers(app)
 
 
 @app.on_event("startup")
