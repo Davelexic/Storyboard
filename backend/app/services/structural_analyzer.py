@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Dict, List, Any, Optional
 import re
 import logging
+from .utils import contains_dialogue
 
 logger = logging.getLogger(__name__)
 
@@ -263,7 +264,7 @@ class StoryStructureAnalyzer:
         
         for item in content:
             text = item.get('text', '')
-            if self._contains_dialogue(text):
+            if contains_dialogue(text):
                 dialogue_count += 1
         
         return dialogue_count / total_segments
@@ -393,7 +394,7 @@ class StoryStructureAnalyzer:
         for item in content:
             text = item.get('text', '')
             # Simple character detection (would be enhanced)
-            if '"' in text:  # Dialogue
+            if contains_dialogue(text):  # Dialogue
                 emotion_score = self._calculate_dialogue_emotion(text)
                 character_emotions['speaker'] = emotion_score
         
@@ -406,10 +407,6 @@ class StoryStructureAnalyzer:
         
         word_count = len(text.split())
         return emotion_count / word_count if word_count > 0 else 0.0
-    
-    def _contains_dialogue(self, text: str) -> bool:
-        """Check if text contains dialogue."""
-        return '"' in text or '"' in text or '"' in text
     
     def _is_scene_transition(self, text: str) -> bool:
         """Check if text represents a scene transition."""
