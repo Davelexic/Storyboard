@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 import os
-from typing import Optional
 
 # Load environment variables from .env file
 try:
