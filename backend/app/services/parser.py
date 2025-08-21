@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict
 import logging
 
 logger = logging.getLogger(__name__)
