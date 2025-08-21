@@ -50,6 +50,20 @@ class IntelligentEffectSelector:
                     'intensity_threshold': 0.7,
                     'character_types': ['romantic', 'passionate', 'lover'],
                     'contexts': ['romance', 'confession', 'intimate']
+                },
+                'fantasy_glow': {
+                    'triggers': ['magic', 'enchanted', 'dragon', 'mystic'],
+                    'intensity_threshold': 0.5,
+                    'character_types': ['wizard', 'elf', 'hero'],
+                    'contexts': ['magic', 'fantasy', 'enchanted'],
+                    'themes': ['fantasy']
+                },
+                'noir_shadow': {
+                    'triggers': ['shadow', 'smoke', 'dark', 'mystery'],
+                    'intensity_threshold': 0.5,
+                    'character_types': ['detective', 'antihero', 'criminal'],
+                    'contexts': ['crime', 'investigation', 'night'],
+                    'themes': ['noir']
                 }
             },
             'word_effect': {
@@ -99,7 +113,7 @@ class IntelligentEffectSelector:
             },
             'TIER_2_MODERATE': {
                 'usage_rate': 1.0,  # 1% of content
-                'effects': ['fiery_sharp', 'mysterious_shadow', 'glow', 'sparkle'],
+                'effects': ['fiery_sharp', 'mysterious_shadow', 'glow', 'sparkle', 'fantasy_glow', 'noir_shadow'],
                 'intensity_range': (0.5, 0.7)
             },
             'TIER_3_DRAMATIC': {
@@ -109,9 +123,10 @@ class IntelligentEffectSelector:
             }
         }
     
-    def select_appropriate_effects(self, content_item: Dict[str, Any], 
+    def select_appropriate_effects(self, content_item: Dict[str, Any],
                                  character_profiles: Dict[str, Dict],
-                                 effect_history: List[Dict]) -> List[Dict[str, Any]]:
+                                 effect_history: List[Dict],
+                                 book_theme: str = 'general') -> List[Dict[str, Any]]:
         """
         Select appropriate effects for a content segment.
         
@@ -135,27 +150,38 @@ class IntelligentEffectSelector:
             
             # Determine effect tier based on emotional intensity
             effect_tier = self._determine_effect_tier(emotional_score)
-            
+
+            # Filter available effects by theme
+            text_style_options = self._filter_effects_by_theme(
+                self.effect_tiers[effect_tier]['effects'], 'text_style', book_theme
+            )
+            word_effect_options = self._filter_effects_by_theme(
+                self.effect_tiers[effect_tier]['effects'], 'word_effect', book_theme
+            )
+            sound_effect_options = self._filter_effects_by_theme(
+                self.effect_tiers[effect_tier]['effects'], 'sound', book_theme
+            )
+
             # Select effects based on context and character profiles
             selected_effects = []
-            
+
             # Text style effects
             text_style_effect = self._select_text_style_effect(
-                emotional_context, character_profiles, text, effect_tier
+                emotional_context, character_profiles, text, text_style_options
             )
             if text_style_effect:
                 selected_effects.append(text_style_effect)
-            
+
             # Word effects
             word_effects = self._select_word_effects(
-                emotional_context, text, effect_tier
+                emotional_context, text, word_effect_options
             )
             selected_effects.extend(word_effects)
-            
+
             # Sound effects (only for very high intensity moments)
             if emotional_score > 0.8:
                 sound_effect = self._select_sound_effect(
-                    emotional_context, text, effect_tier
+                    emotional_context, text, sound_effect_options
                 )
                 if sound_effect:
                     selected_effects.append(sound_effect)
@@ -196,24 +222,34 @@ class IntelligentEffectSelector:
             return 'TIER_2_MODERATE'
         else:
             return 'TIER_1_MICRO'
-    
+
+    def _filter_effects_by_theme(self, effect_names: List[str], effect_type: str, book_theme: str) -> List[str]:
+        """Filter effects based on the current book theme."""
+        library = self.effect_library.get(effect_type, {})
+        filtered = []
+        for name in effect_names:
+            config = library.get(name)
+            if not config:
+                continue
+            themes = config.get('themes', ['general'])
+            if book_theme in themes or 'general' in themes:
+                filtered.append(name)
+        return filtered
+
     def _select_text_style_effect(self, emotional_context: Dict[str, Any],
                                 character_profiles: Dict[str, Dict],
-                                text: str, effect_tier: str) -> Optional[Dict[str, Any]]:
+                                text: str, available_effects: List[str]) -> Optional[Dict[str, Any]]:
         """Select appropriate text style effect."""
         primary_emotion = emotional_context.get('primary_emotion', 'neutral')
         context_type = emotional_context.get('context_type', 'narrative')
-        
-        # Get available effects for this tier
-        available_effects = self.effect_tiers[effect_tier]['effects']
-        
+
         # Filter effects that match the emotion and context
         matching_effects = []
-        
+
         for effect_name in available_effects:
             if effect_name in self.effect_library['text_style']:
                 effect_config = self.effect_library['text_style'][effect_name]
-                
+
                 # Check if effect matches current context
                 if self._effect_matches_context(effect_config, primary_emotion, context_type, text):
                     matching_effects.append((effect_name, effect_config))
@@ -234,23 +270,19 @@ class IntelligentEffectSelector:
         return None
     
     def _select_word_effects(self, emotional_context: Dict[str, Any],
-                           text: str, effect_tier: str) -> List[Dict[str, Any]]:
+                           text: str, available_effects: List[str]) -> List[Dict[str, Any]]:
         """Select appropriate word effects."""
         word_effects = []
         primary_emotion = emotional_context.get('primary_emotion', 'neutral')
-        
-        # Get available word effects for this tier
-        available_effects = [e for e in self.effect_tiers[effect_tier]['effects'] 
-                           if e in self.effect_library['word_effect']]
-        
+
         for effect_name in available_effects:
             effect_config = self.effect_library['word_effect'][effect_name]
-            
+
             # Check if effect matches current context
             if self._effect_matches_context(effect_config, primary_emotion, 'word', text):
                 # Find matching words in text
                 matching_words = self._find_matching_words(effect_config['triggers'], text)
-                
+
                 for word in matching_words:
                     word_effects.append({
                         'type': 'word_effect',
@@ -263,17 +295,13 @@ class IntelligentEffectSelector:
         return word_effects[:2]  # Max 2 word effects per segment
     
     def _select_sound_effect(self, emotional_context: Dict[str, Any],
-                           text: str, effect_tier: str) -> Optional[Dict[str, Any]]:
+                           text: str, available_effects: List[str]) -> Optional[Dict[str, Any]]:
         """Select appropriate sound effect."""
         primary_emotion = emotional_context.get('primary_emotion', 'neutral')
-        
-        # Get available sound effects for this tier
-        available_effects = [e for e in self.effect_tiers[effect_tier]['effects'] 
-                           if e in self.effect_library['sound']]
-        
+
         for effect_name in available_effects:
             effect_config = self.effect_library['sound'][effect_name]
-            
+
             # Check if effect matches current context
             if self._effect_matches_context(effect_config, primary_emotion, 'sound', text):
                 return {
