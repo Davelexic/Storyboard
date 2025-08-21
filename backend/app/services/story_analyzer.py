@@ -230,11 +230,11 @@ class StoryAnalyzer:
         for effect in effect_history:
             chapter = effect['chapter']
             chapter_distribution[chapter] = chapter_distribution.get(chapter, 0) + 1
-        
+
         return {
             'total_effects': len(effect_history),
             'distribution': chapter_distribution,
-            'average_effects_per_chapter': len(effect_history) / max(chapter_distribution.keys()) if chapter_distribution else 0
+            'average_effects_per_chapter': len(effect_history) / len(chapter_distribution)
         }
     
     def _analyze_character_effect_usage(self, effect_history: List[Dict], character_profiles: Dict) -> Dict[str, int]:
