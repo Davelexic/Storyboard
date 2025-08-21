@@ -3,7 +3,6 @@ from sqlmodel import Session, select
 from typing import List
 import os
 import tempfile
-import shutil
 from datetime import datetime
 
 from ..db import get_session
