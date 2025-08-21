@@ -195,6 +195,28 @@ def create_sample_books():
     return sample_books
 
 
+def test_emotion_scorer_model_integration():
+    """Ensure model sentiment is incorporated into emotional weighting."""
+    scorer = EmotionalIntensityScorer()
+
+    # Stub out heuristics to isolate model contribution
+    scorer._analyze_dialogue_emotion = lambda text: 0.0
+    scorer._measure_action_pacing = lambda text: 0.0
+    scorer._assess_sensory_language = lambda text: 0.0
+    scorer._evaluate_conflict_intensity = lambda text: 0.0
+    scorer._assess_character_openness = lambda text, profiles: 0.0
+    scorer._calculate_narrative_context_weight = lambda item, structure: 1.0
+
+    # Provide a deterministic sentiment analyzer
+    scorer.sentiment_analyzer = lambda t: [{"label": "POSITIVE", "score": 0.75}]
+
+    content_item = {"text": "A short sentence."}
+    score = scorer.calculate_emotional_weight(content_item, {}, {})
+
+    expected = scorer.emotion_weights["model_sentiment"] * 0.75
+    assert abs(score - expected) < 1e-6
+
+
 def test_theme_specific_effect_application():
     """Verify that effects are filtered by theme before evaluation."""
     selector = IntelligentEffectSelector()

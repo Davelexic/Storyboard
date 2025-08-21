@@ -9,6 +9,11 @@ from __future__ import annotations
 from typing import Dict, List, Any, Optional
 import logging
 
+try:  # Optional dependency for model-based sentiment analysis
+    from transformers import pipeline  # type: ignore
+except Exception:  # pragma: no cover - handled gracefully during runtime
+    pipeline = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -25,13 +30,26 @@ class EmotionalIntensityScorer:
     
     def __init__(self):
         """Initialize the emotion scorer."""
+        # Base weights for heuristic factors and model sentiment
         self.emotion_weights = {
-            'dialogue_intensity': 0.3,
-            'action_urgency': 0.25,
-            'sensory_richness': 0.2,
+            'dialogue_intensity': 0.25,
+            'action_urgency': 0.2,
+            'sensory_richness': 0.15,
             'conflict_level': 0.15,
-            'character_vulnerability': 0.1
+            'character_vulnerability': 0.1,
+            'model_sentiment': 0.15,
         }
+
+        # Lazily initialized sentiment analysis pipeline
+        self._pipeline_factory = None
+        self.sentiment_analyzer: Optional[Any] = None
+        if pipeline is not None:
+            # Defer heavy model loading until first use
+            self._pipeline_factory = lambda: pipeline(
+                "sentiment-analysis",
+                model="distilbert-base-uncased-finetuned-sst-2-english",
+                local_files_only=True,
+            )
         
         self.emotion_keywords = {
             'high_intensity': [
@@ -81,17 +99,24 @@ class EmotionalIntensityScorer:
                 'action_urgency': self._measure_action_pacing(text),
                 'sensory_richness': self._assess_sensory_language(text),
                 'conflict_level': self._evaluate_conflict_intensity(text),
-                'character_vulnerability': self._assess_character_openness(text, character_profiles)
+                'character_vulnerability': self._assess_character_openness(text, character_profiles),
             }
-            
+
+            model_score, model_confidence = self._analyze_model_sentiment(text)
+            factors['model_sentiment'] = model_score
+
             # Apply narrative context weighting
             context_weight = self._calculate_narrative_context_weight(content_item, structure_data)
-            
+
+            # Adjust weights to account for model confidence
+            weights = self.emotion_weights.copy()
+            weights['model_sentiment'] *= model_confidence
+
             # Calculate weighted emotional score
-            emotional_score = sum([
-                factors[factor] * self.emotion_weights[factor] * context_weight
+            emotional_score = sum(
+                factors[factor] * weights.get(factor, 0.0) * context_weight
                 for factor in factors
-            ])
+            )
             
             # Normalize to 0.0-1.0 range
             return min(1.0, max(0.0, emotional_score))
@@ -297,8 +322,42 @@ class EmotionalIntensityScorer:
         # Normalize by text length
         word_count = len(text.split())
         base_vulnerability = vulnerability_count / word_count if word_count > 0 else 0.0
-        
+
         return min(1.0, base_vulnerability + character_vulnerability)
+
+    def _analyze_model_sentiment(self, text: str) -> tuple[float, float]:
+        """Use a transformer model to analyze sentiment.
+
+        Returns a tuple of (sentiment_score, confidence). The score is a
+        simplified intensity measure (1.0 for non-neutral sentiment, 0.0
+        otherwise) while confidence reflects the classifier's reported
+        probability.
+        """
+        if not text:
+            return 0.0, 0.0
+
+        # Lazily load the pipeline to avoid expensive model loading when
+        # sentiment analysis is not required or the dependency is missing.
+        if self.sentiment_analyzer is None and self._pipeline_factory is not None:
+            try:
+                self.sentiment_analyzer = self._pipeline_factory()
+            except Exception as exc:  # pragma: no cover - best effort
+                logger.warning("Sentiment pipeline unavailable: %s", exc)
+                self._pipeline_factory = None
+                return 0.0, 0.0
+
+        if not self.sentiment_analyzer:
+            return 0.0, 0.0
+
+        try:
+            result = self.sentiment_analyzer(text[:512])[0]
+            label = str(result.get('label', '')).lower()
+            confidence = float(result.get('score', 0.0))
+            sentiment_score = 1.0 if label not in {'neutral', ''} else 0.0
+            return sentiment_score, confidence
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.warning("Sentiment analysis failed: %s", exc)
+            return 0.0, 0.0
     
     def _calculate_narrative_context_weight(self, content_item: Dict[str, Any], 
                                           structure_data: Dict[str, Any]) -> float:
