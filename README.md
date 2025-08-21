@@ -4,7 +4,7 @@
 
 A revolutionary digital reading platform that enhances traditional ebooks with intelligent cinematic effects—kinetic typography, atmospheric audio, and thematic visuals—while preserving the fundamental joy of reading.
 
-[![CI](https://github.com/OWNER/Storyboard/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/Storyboard/actions/workflows/ci.yml)
+[![CI](https://github.com/Davelexic/Storyboard/actions/workflows/ci.yml/badge.svg)](https://github.com/Davelexic/Storyboard/actions/workflows/ci.yml)
 
 ## 🎯 Vision & Philosophy
 
@@ -223,8 +223,10 @@ cd backend
 # Install Python dependencies
 pip install -r requirements.txt
 
-# Set up database (PostgreSQL required)
-# Update alembic.ini with your database URL
+# Set up the database
+# 1. Create a `.env` file from `.env.example`
+# 2. Update the `DATABASE_URL` in your `.env` file to point to your PostgreSQL database
+# 3. Run database migrations
 alembic upgrade head
 
 # Start the development server
@@ -327,7 +329,7 @@ This project is in active development. Contributions are welcome! Please see our
 
 ## 📄 License
 
-[License information to be added]
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
