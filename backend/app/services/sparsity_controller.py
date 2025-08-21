@@ -6,9 +6,9 @@ and meaningfully. Prevents overuse and maintains the "book is the star" principl
 """
 
 from __future__ import annotations
-from typing import Dict, List, Any, Optional
+
 import logging
-import random
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
