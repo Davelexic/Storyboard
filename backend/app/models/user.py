@@ -29,6 +29,9 @@ class User(SQLModel, table=True):
     is_active: bool = Field(default=True)
     created_at: datetime = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime))
     updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime))
+    preferences: Dict[str, Any] = Field(
+        default_factory=default_preferences, sa_column=Column(JSON)
+    )
 
 
 class UserPreferences(SQLModel, table=True):

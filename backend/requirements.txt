@@ -16,7 +16,7 @@ python-jose[cryptography]>=3.3.0
 httpx>=0.25.0
 
 # Data Validation
-pydantic>=2.5.0
+pydantic>=1.10,<3
 
 # Environment & Configuration
 python-dotenv>=1.0.0

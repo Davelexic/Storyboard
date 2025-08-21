@@ -94,7 +94,7 @@ def update_preferences(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    current_user.preferences = prefs.model_dump()
+    current_user.preferences = prefs.dict()
     session.add(current_user)
     session.commit()
     session.refresh(current_user)

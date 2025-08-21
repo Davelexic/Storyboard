@@ -43,3 +43,25 @@ def test_user_preferences_roundtrip(client):
     assert get_resp.status_code == 200
     assert get_resp.json() == prefs
 
+
+def test_partial_preference_update(client):
+    register_resp = client.post(
+        "/users/register", json={"email": "partial@example.com", "password": "secret"}
+    )
+    assert register_resp.status_code == 200
+
+    login_resp = client.post(
+        "/users/login", json={"email": "partial@example.com", "password": "secret"}
+    )
+    assert login_resp.status_code == 200
+    token = login_resp.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    update = {"fontSize": 24}
+    put_resp = client.put("/users/me/preferences", headers=headers, json=update)
+    assert put_resp.status_code == 200
+    assert put_resp.json()["fontSize"] == 24
+
+    get_resp = client.get("/users/me/preferences", headers=headers)
+    assert get_resp.status_code == 200
+    assert get_resp.json()["fontSize"] == 24
