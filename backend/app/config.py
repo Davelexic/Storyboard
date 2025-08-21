@@ -2,6 +2,13 @@ from pydantic import BaseModel
 import os
 from typing import Optional
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv not installed, use system environment variables
+
 
 class Settings(BaseModel):
     """Application configuration loaded from environment variables."""

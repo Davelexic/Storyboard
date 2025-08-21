@@ -6,7 +6,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "0003_enhance_models"
-down_revision = "0002_add_markup_column"
+down_revision = "0001_init"
 branch_labels = None
 depends_on = None
 
@@ -27,7 +27,7 @@ def upgrade() -> None:
     op.add_column("book", sa.Column("created_at", sa.DateTime(), nullable=True))
     op.add_column("book", sa.Column("updated_at", sa.DateTime(), nullable=True))
     op.add_column("book", sa.Column("processed_at", sa.DateTime(), nullable=True))
-    op.add_column("book", sa.Column("metadata", postgresql.JSONB(), nullable=True))
+    op.add_column("book", sa.Column("book_metadata", postgresql.JSONB(), nullable=True))
     
     # Add new columns to user table
     op.add_column("user", sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"))
@@ -77,7 +77,7 @@ def downgrade() -> None:
     op.drop_column("user", "is_active")
     
     # Drop columns from book table
-    op.drop_column("book", "metadata")
+    op.drop_column("book", "book_metadata")
     op.drop_column("book", "processed_at")
     op.drop_column("book", "updated_at")
     op.drop_column("book", "created_at")
