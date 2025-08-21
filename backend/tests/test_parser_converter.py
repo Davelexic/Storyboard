@@ -2,6 +2,7 @@ import zipfile
 
 from backend.app.services.converter import generate_cinematic_markup
 from backend.app.services.parser import parse_epub
+from backend.app.services.story_analyzer import StoryAnalyzer
 
 
 def _create_sample_epub(tmp_path):
@@ -47,7 +48,8 @@ def test_parse_epub(tmp_path):
     assert len(parsed["chapters"]) == 1
     chapter = parsed["chapters"][0]
     assert chapter["title"] == "Chapter 1"
-    assert chapter["paragraphs"] == ["Hello world.", "Second paragraph."]
+    assert chapter["content"][0]["text"] == "Hello world."
+    assert chapter["content"][1]["text"] == "Second paragraph."
 
 
 def test_generate_cinematic_markup():
@@ -56,7 +58,10 @@ def test_generate_cinematic_markup():
         "chapters": [
             {
                 "title": "Chapter 1",
-                "paragraphs": ["Hello world.", "Second paragraph."],
+                "content": [
+                    {"text": "Hello world."},
+                    {"text": "Second paragraph."},
+                ],
             }
         ],
     }
@@ -74,4 +79,19 @@ def test_generate_cinematic_markup():
         "effects": [],
     }
     assert chapter_markup["content"][1]["text"] == "Second paragraph."
+
+
+def test_story_analyzer_processes_chapters(tmp_path):
+    epub_path = _create_sample_epub(tmp_path)
+    parsed = parse_epub(str(epub_path))
+
+    analyzer = StoryAnalyzer()
+    result = analyzer.analyze_and_enhance(parsed)
+
+    assert result["chapters"], "No chapters returned"
+    first_chapter = result["chapters"][0]
+    if isinstance(first_chapter, dict):
+        assert first_chapter["content"], "Chapter content should not be empty"
+    else:
+        assert first_chapter, "Chapter content should not be empty"
 

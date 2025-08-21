@@ -43,8 +43,8 @@ def _parse_chapter(html: bytes) -> Dict[str, object]:
             break
     title = title_elem.text if title_elem is not None else ""
 
-    paragraphs = [p.text or "" for p in root.findall(".//x:p", ns)]
-    return {"title": title, "paragraphs": paragraphs}
+    content = [{"text": p.text or ""} for p in root.findall(".//x:p", ns)]
+    return {"title": title, "content": content}
 
 
 def parse_epub(epub_file_path: str) -> Dict[str, object]:
